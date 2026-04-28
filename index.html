@@ -9,9 +9,7 @@
 </head>
 <body>
 
-<!-- ═══════════════════════
-     SCREEN: INTRO
-═══════════════════════ -->
+<!-- SCREEN: INTRO -->
 <div id="screen-intro" class="screen active">
   <div class="blob" style="width:280px;height:280px;background:var(--blue);opacity:0.07;top:-80px;left:-80px;"></div>
   <div class="blob" style="width:220px;height:220px;background:var(--orange);opacity:0.08;bottom:-50px;right:-50px;"></div>
@@ -59,9 +57,7 @@
   <button class="btn-secondary" onclick="skipToGame()">⌨️ Lewati (pakai keyboard)</button>
 </div>
 
-<!-- ═══════════════════════
-     SCREEN: SETUP
-═══════════════════════ -->
+<!-- SCREEN: SETUP -->
 <div id="screen-setup" class="screen">
   <div class="setup-wrapper">
     <div class="setup-box">
@@ -104,21 +100,14 @@
   </div>
 </div>
 
-<!-- ═══════════════════════
-     SCREEN: GAME
-═══════════════════════ -->
+<!-- SCREEN: GAME -->
 <div id="screen-game" class="screen">
-
-  <!-- Panel Kamera -->
   <div class="cam-panel">
     <div class="cam-header">📷 Deteksi Gestur</div>
-
     <div class="cam-view-wrap">
       <canvas id="webcam-canvas" width="300" height="300"></canvas>
     </div>
-
     <div class="detect-section-title">Tingkat Kepercayaan AI</div>
-
     <div class="detect-bars">
       <div class="detect-bar-item">
         <span class="detect-bar-label left">← Kiri</span>
@@ -136,12 +125,10 @@
         <span class="detect-pct" id="pct-neutral">0%</span>
       </div>
     </div>
-
     <div class="gesture-display">
       <div class="gesture-label">Gestur Terdeteksi</div>
       <div class="gesture-value neutral" id="gesture-value">—</div>
     </div>
-
     <div class="hold-timer-wrap">
       <div class="hold-timer-label">⏳ Tahan 1.5 detik untuk jawab</div>
       <div class="hold-bar-track">
@@ -150,7 +137,6 @@
     </div>
   </div>
 
-  <!-- Panel Kuis -->
   <div class="quiz-panel">
     <div class="quiz-topbar">
       <div class="topbar-logo">
@@ -167,13 +153,11 @@
       </div>
       <div class="quiz-score-badge">⭐ <span id="score-display">0</span> poin</div>
     </div>
-
     <div class="quiz-main">
       <div class="question-bubble">
         <div class="question-number" id="q-number">Pertanyaan 1</div>
         <div class="question-text" id="q-text">Memuat pertanyaan...</div>
       </div>
-
       <div class="choices-row">
         <div class="choice-card left" id="choice-left">
           <div class="choice-direction"><span class="choice-arrow">←</span> Tangan Kiri</div>
@@ -188,22 +172,18 @@
   </div>
 </div>
 
-<!-- ═══════════════════════
-     SCREEN: RESULT
-═══════════════════════ -->
+<!-- SCREEN: RESULT -->
 <div id="screen-result" class="screen">
   <div class="result-card">
     <span class="result-trophy" id="result-trophy">🏆</span>
     <div class="result-title">Selesai!</div>
     <div class="result-score" id="result-pct">80%</div>
     <div class="result-label" id="result-label">Benar 4 dari 5 pertanyaan</div>
-
     <div class="result-stats">
       <div class="stat-chip correct">✅ Benar: <span id="stat-correct">4</span></div>
       <div class="stat-chip wrong">❌ Salah: <span id="stat-wrong">1</span></div>
       <div class="stat-chip time">⏱️ <span id="stat-time">—</span></div>
     </div>
-
     <div class="result-actions">
       <button class="btn-green" onclick="restartGame()">🔁 Main Lagi</button>
       <button class="btn-secondary" onclick="showScreen('intro')">🏠 Beranda</button>
@@ -211,24 +191,18 @@
   </div>
 </div>
 
-<!-- ═══════════════════════
-     OVERLAYS
-═══════════════════════ -->
+<!-- OVERLAYS -->
 <div class="countdown-overlay" id="countdown-overlay">
   <div class="countdown-number" id="countdown-num">3</div>
 </div>
-
 <div class="feedback-overlay" id="feedback-overlay">
   <div class="feedback-bubble" id="feedback-bubble">✓</div>
 </div>
 
-<!-- ═══════════════════════
-     SCRIPTS
-═══════════════════════ -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@latest/dist/teachablemachine-pose.min.js"></script>
+<!-- SCRIPTS - VERSI KOMPATIBEL (inilah yang diubah) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8.1/dist/teachablemachine-pose.min.js"></script>
 <script src="quiz-data.js"></script>
 <script src="app.js"></script>
-
 </body>
 </html>
