@@ -159,49 +159,31 @@ async function startPredictionLoop() {
   canvas.height = size;
 
   async function loop() {
-    try {
-      // Update webcam frame
-      webcam.update();
-      
-      // Estimate pose
-      const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-      const predictions = await model.predict(posenetOutput);
+  if (!isModelLoaded) return;
 
-      // PERBAIKAN: Clear canvas lama lalu gambar frame terbaru
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(webcam.canvas, 0, 0); // Gambar webcam feed
-      
-      // Gambar skeleton & keypoints jika terdeteksi
-      if (pose) {
-        const minPartConfidence = 0.5;
-        tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
-        tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
-      }
+  webcam.update(); // Update frame dari webcam
 
-      // Parse predictions untuk gesture detection
-      let leftConf = 0, rightConf = 0, neutralConf = 0;
-      predictions.forEach(p => {
-        const name = p.className.toLowerCase();
-        if (name === classLabels.left.toLowerCase()) {
-          leftConf = p.probability;
-        } else if (name === classLabels.right.toLowerCase()) {
-          rightConf = p.probability;
-        } else {
-          neutralConf = Math.max(neutralConf, p.probability);
-        }
-      });
+  // BAGIAN PENTING: Gambar frame webcam ke canvas HTML biar nggak hitam
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Hapus frame lama
+  ctx.drawImage(webcam.canvas, 0, 0); // Gambar frame baru dari webcam
 
-      updateBars(leftConf, rightConf, neutralConf);
-      processGesture(leftConf, rightConf);
+  const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+  const predictions = await model.predict(posenetOutput);
 
-      // Loop dengan requestAnimationFrame
-      predictionLoop = requestAnimationFrame(loop);
-    } catch (err) {
-      console.error('Prediction error:', err);
-      // Retry on error
-      predictionLoop = requestAnimationFrame(loop);
-    }
+  // Gambar skeleton/titik tulang kalau mau (opsional)
+  if (pose) {
+    tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
+    tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
   }
+
+  const sortedPredictions = [...predictions].sort((a, b) => b.probability - a.probability);
+  const topPrediction = sortedPredictions[0];
+
+  updateBars(predictions);
+  handlePrediction(topPrediction);
+
+  predictionLoop = setTimeout(loop, PREDICTION_INTERVAL);
+}
 
   // Start the loop
   loop();
