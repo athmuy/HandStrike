@@ -7,7 +7,7 @@
 const HOLD_DURATION = 1500;
 const CONFIDENCE_THRESHOLD = 0.75;
 const PREDICTION_INTERVAL = 100;
-const DEFAULT_MODEL_URL = "https://teachablemachine.withgoogle.com/models/SoddPQAQH/";
+const DEFAULT_MODEL_URL = "https://teachablemachine.withgoogle.com/models/rsT6VZXS5/";
 
 // ── STATE ──
 let model = null;
