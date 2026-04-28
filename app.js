@@ -87,11 +87,12 @@ async function loadModel() {
     isModelLoaded = true;
     isCameraMode = true;
 
-    setStatus('success', '✅ Model dan kamera siap! Dimulai dalam 3 detik...');
-
+    // Set canvas dimensions properly
     const canvas = document.getElementById('webcam-canvas');
-    canvas.width = size;
-    canvas.height = size;
+    canvas.width = 300;
+    canvas.height = 300;
+
+    setStatus('success', '✅ Model dan kamera siap! Dimulai dalam 3 detik...');
 
     setTimeout(() => startCountdown(), 800);
   } catch (err) {
@@ -141,36 +142,63 @@ async function startPredictionLoop() {
   if (!isCameraMode || !model || !webcam) return;
 
   const canvas = document.getElementById('webcam-canvas');
+  if (!canvas) {
+    console.error('Canvas not found!');
+    return;
+  }
+
   const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    console.error('Cannot get 2D context from canvas!');
+    return;
+  }
+
+  // Ensure canvas has proper dimensions
+  canvas.width = 300;
+  canvas.height = 300;
 
   async function loop() {
-    webcam.update();
-    const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-    const predictions = await model.predict(posenetOutput);
+    try {
+      webcam.update();
+      const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+      const predictions = await model.predict(posenetOutput);
 
-    // Draw video frame
-    ctx.drawImage(webcam.canvas, 0, 0);
-    
-    // Draw pose keypoints
-    if (pose) tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
+      // Clear canvas first
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Parse predictions
-    let leftConf = 0, rightConf = 0, neutralConf = 0;
-    predictions.forEach(p => {
-      const name = p.className.toLowerCase();
-      if (name === classLabels.left.toLowerCase()) {
-        leftConf = p.probability;
-      } else if (name === classLabels.right.toLowerCase()) {
-        rightConf = p.probability;
-      } else {
-        neutralConf = Math.max(neutralConf, p.probability);
+      // Draw video frame dengan mirror
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(webcam.canvas, -canvas.width, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      // Draw pose keypoints
+      if (pose) {
+        tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
       }
-    });
 
-    updateBars(leftConf, rightConf, neutralConf);
-    processGesture(leftConf, rightConf);
+      // Parse predictions
+      let leftConf = 0, rightConf = 0, neutralConf = 0;
+      predictions.forEach(p => {
+        const name = p.className.toLowerCase();
+        if (name === classLabels.left.toLowerCase()) {
+          leftConf = p.probability;
+        } else if (name === classLabels.right.toLowerCase()) {
+          rightConf = p.probability;
+        } else {
+          neutralConf = Math.max(neutralConf, p.probability);
+        }
+      });
 
-    predictionLoop = setTimeout(loop, PREDICTION_INTERVAL);
+      updateBars(leftConf, rightConf, neutralConf);
+      processGesture(leftConf, rightConf);
+
+      predictionLoop = setTimeout(loop, PREDICTION_INTERVAL);
+    } catch (err) {
+      console.error('Prediction error:', err);
+      predictionLoop = setTimeout(loop, PREDICTION_INTERVAL);
+    }
   }
 
   loop();
