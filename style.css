@@ -287,9 +287,19 @@ body::before {
   background: #1a1a2e;
   aspect-ratio: 4/3;
   border: 3px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-#webcam-canvas { width: 100%; height: 100%; object-fit: cover; display: block; transform: scaleX(-1); }
+#webcam-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1);
+  background: #000;
+}
 
 /* Bar deteksi */
 .detect-section-title { font-size: 11px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
