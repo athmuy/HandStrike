@@ -153,29 +153,29 @@ async function startPredictionLoop() {
     return;
   }
 
-  // Ensure canvas has proper dimensions
-  canvas.width = 300;
-  canvas.height = 300;
+  // Ensure canvas has proper dimensions matching aspect ratio
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio || 300;
+  canvas.height = rect.height * window.devicePixelRatio || 225;
 
   async function loop() {
     try {
+      // Update webcam
       webcam.update();
-      const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+      
+      // Get the internal canvas dari tmPose.Webcam
+      const webcamInternalCanvas = webcam.canvas;
+      
+      // Draw ke canvas kita
+      ctx.drawImage(webcamInternalCanvas, 0, 0, canvas.width, canvas.height);
+      
+      // Estimate pose
+      const { pose, posenetOutput } = await model.estimatePose(webcamInternalCanvas);
       const predictions = await model.predict(posenetOutput);
 
-      // Clear canvas first
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw video frame dengan mirror
-      ctx.save();
-      ctx.scale(-1, 1);
-      ctx.drawImage(webcam.canvas, -canvas.width, 0, canvas.width, canvas.height);
-      ctx.restore();
-
-      // Draw pose keypoints
+      // Draw keypoints
       if (pose) {
-        tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
+        tmPose.drawKeypoints(pose.keypoints, 0.7, ctx);
       }
 
       // Parse predictions
@@ -194,13 +194,16 @@ async function startPredictionLoop() {
       updateBars(leftConf, rightConf, neutralConf);
       processGesture(leftConf, rightConf);
 
+      // Loop dengan setTimeout
       predictionLoop = setTimeout(loop, PREDICTION_INTERVAL);
     } catch (err) {
       console.error('Prediction error:', err);
+      // Try again even on error
       predictionLoop = setTimeout(loop, PREDICTION_INTERVAL);
     }
   }
 
+  // Start the loop
   loop();
 }
 
