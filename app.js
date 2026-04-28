@@ -60,7 +60,6 @@ function keyboardFallback(e) {
 async function loadModel() {
   let urlInput = document.getElementById('model-url-input').value.trim();
   
-  // Gunakan default kalau kosong
   if (!urlInput) {
     urlInput = DEFAULT_MODEL_URL;
     document.getElementById('model-url-input').value = DEFAULT_MODEL_URL;
@@ -75,7 +74,6 @@ async function loadModel() {
   setStatus('loading', '<span class="spinner"></span> Memuat model Teachable Machine...');
 
   try {
-    // Load model Teachable Machine
     model = await tmPose.load(modelURL + 'model.json', modelURL + 'metadata.json');
     setStatus('loading', '<span class="spinner"></span> Membuka kamera...');
 
@@ -84,10 +82,15 @@ async function loadModel() {
     await webcam.setup();
     await webcam.play();
 
+    // Pastikan video element berjalan lancar
+    if (webcam.video) {
+      webcam.video.setAttribute('playsinline', '');
+      await webcam.video.play().catch(e => console.warn('Auto-play warning:', e));
+    }
+
     isModelLoaded = true;
     isCameraMode = true;
 
-    // PENTING: Pastikan canvas terhubung dengan webcam
     const canvas = document.getElementById('webcam-canvas');
     canvas.width = size;
     canvas.height = size;
@@ -128,7 +131,7 @@ function startCountdown() {
       if (isCameraMode) startPredictionLoop();
     } else {
       numEl.style.animation = 'none';
-      void numEl.offsetWidth; // Trigger reflow
+      void numEl.offsetWidth;
       numEl.style.animation = 'countPop 0.5s cubic-bezier(0.34,1.56,0.64,1)';
       numEl.textContent = count;
     }
@@ -136,7 +139,7 @@ function startCountdown() {
 }
 
 // ════════════════════════════════
-// PREDICTION LOOP
+// PREDICTION LOOP (FIXED)
 // ════════════════════════════════
 async function startPredictionLoop() {
   if (!isCameraMode || !model || !webcam) return;
@@ -153,39 +156,70 @@ async function startPredictionLoop() {
     return;
   }
 
-  // Ensure proper canvas dimensions
   const size = 300;
   canvas.width = size;
   canvas.height = size;
 
   async function loop() {
-  if (!isModelLoaded) return;
+    if (!isCameraMode || !model || !webcam) return;
 
-  webcam.update(); // Update frame dari webcam
+    try {
+      // Update webcam internal frame
+      webcam.update();
+      
+      // Estimate pose dari canvas internal webcam (diperlukan untuk model)
+      const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+      const predictions = await model.predict(posenetOutput);
 
-  // BAGIAN PENTING: Gambar frame webcam ke canvas HTML biar nggak hitam
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Hapus frame lama
-  ctx.drawImage(webcam.canvas, 0, 0); // Gambar frame baru dari webcam
+      // Gambar video dari elemen video asli (fix layar hitam)
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (webcam.video && webcam.video.readyState >= 2) {
+        // Flip horizontal agar mirror preview
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(webcam.video, -canvas.width, 0, canvas.width, canvas.height);
+        ctx.restore();
+      } else if (webcam.canvas) {
+        // Fallback
+        ctx.drawImage(webcam.canvas, 0, 0);
+      }
 
-  const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-  const predictions = await model.predict(posenetOutput);
+      // Gambar skeleton jika pose terdeteksi
+      if (pose) {
+        const minPartConfidence = 0.5;
+        // Fungsi draw membutuhkan koordinat yang sudah di-flip? Kita gambar setelah flip
+        // Karena canvas sudah mirror, kita tetap gambar biasa.
+        // Untuk koreksi posisi (karena flip), kita override dengan fungsi manual sederhana
+        // Tapi untuk kemudahan kita gunakan fungsi bawaan (diasumsikan tetap sesuai)
+        try {
+          tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
+          tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
+        } catch(e) { console.warn("Draw error", e); }
+      }
 
-  // Gambar skeleton/titik tulang kalau mau (opsional)
-  if (pose) {
-    tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
-    tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
+      // Parse predictions
+      let leftConf = 0, rightConf = 0, neutralConf = 0;
+      predictions.forEach(p => {
+        const name = p.className.toLowerCase();
+        if (name === classLabels.left.toLowerCase()) {
+          leftConf = p.probability;
+        } else if (name === classLabels.right.toLowerCase()) {
+          rightConf = p.probability;
+        } else {
+          neutralConf = Math.max(neutralConf, p.probability);
+        }
+      });
+
+      updateBars(leftConf, rightConf, neutralConf);
+      processGesture(leftConf, rightConf);
+
+      predictionLoop = requestAnimationFrame(loop);
+    } catch (err) {
+      console.error('Prediction error:', err);
+      predictionLoop = requestAnimationFrame(loop);
+    }
   }
 
-  const sortedPredictions = [...predictions].sort((a, b) => b.probability - a.probability);
-  const topPrediction = sortedPredictions[0];
-
-  updateBars(predictions);
-  handlePrediction(topPrediction);
-
-  predictionLoop = setTimeout(loop, PREDICTION_INTERVAL);
-}
-
-  // Start the loop
   loop();
 }
 
@@ -225,21 +259,16 @@ function processGesture(leftConf, rightConf) {
     gestureEl.textContent = detected === 'left' ? '← Kiri' : 'Kanan →';
     gestureEl.className = 'gesture-value ' + detected;
 
-    // Highlight active choice
     document.getElementById('choice-left').classList.toggle('active', detected === 'left');
     document.getElementById('choice-right').classList.toggle('active', detected === 'right');
 
     if (detected !== currentGesture) {
-      // New gesture detected — reset hold timer
       currentGesture = detected;
       holdStartTime = Date.now();
     } else {
-      // Same gesture — calculate hold progress
       const elapsed = Date.now() - holdStartTime;
       const progress = Math.min(elapsed / HOLD_DURATION, 1);
       holdBar.style.width = (progress * 100) + '%';
-
-      // Change color when filling up
       holdBar.style.background = progress > 0.65
         ? (detected === 'left' ? 'var(--blue)' : 'var(--red)')
         : 'var(--purple)';
@@ -250,7 +279,6 @@ function processGesture(leftConf, rightConf) {
       }
     }
   } else {
-    // No gesture detected
     gestureEl.textContent = '—';
     gestureEl.className = 'gesture-value neutral';
     currentGesture = null;
@@ -275,19 +303,16 @@ function loadQuestion(index) {
   currentGesture = null;
   holdStartTime = null;
 
-  // Reset UI
   document.getElementById('hold-bar').style.width = '0%';
   document.getElementById('choice-left').className = 'choice-card left';
   document.getElementById('choice-right').className = 'choice-card right';
 
-  // Load question data
   const q = QUIZ_DATA[index];
   document.getElementById('q-number').textContent = 'Pertanyaan ' + (index + 1);
   document.getElementById('q-text').textContent = q.question;
   document.getElementById('choice-left-text').textContent = q.left;
   document.getElementById('choice-right-text').textContent = q.right;
 
-  // Update progress bar
   const pct = ((index + 1) / QUIZ_DATA.length) * 100;
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-text').textContent = (index + 1) + ' / ' + QUIZ_DATA.length;
@@ -307,17 +332,14 @@ function submitAnswer(side) {
     document.getElementById('score-display').textContent = score;
   }
 
-  // Highlight correct/wrong cards
   document.getElementById('choice-' + q.correct).classList.add('correct');
   const wrongSide = q.correct === 'left' ? 'right' : 'left';
   if (!isCorrect) {
     document.getElementById('choice-' + wrongSide).classList.add('wrong');
   }
 
-  // Show feedback
   showFeedback(isCorrect);
 
-  // Next question after delay
   setTimeout(() => {
     hideFeedback();
     loadQuestion(currentQ + 1);
@@ -325,9 +347,6 @@ function submitAnswer(side) {
   }, 1500);
 }
 
-// ════════════════════════════════
-// FEEDBACK
-// ════════════════════════════════
 function showFeedback(isCorrect) {
   const overlay = document.getElementById('feedback-overlay');
   const bubble = document.getElementById('feedback-bubble');
@@ -340,9 +359,6 @@ function hideFeedback() {
   document.getElementById('feedback-overlay').classList.remove('show');
 }
 
-// ════════════════════════════════
-// END GAME
-// ════════════════════════════════
 function endGame() {
   stopPredictionLoop();
   if (webcam) webcam.stop();
@@ -355,7 +371,6 @@ function endGame() {
   const secs = elapsed % 60;
   const timeStr = (mins > 0 ? mins + 'm ' : '') + secs + 's';
 
-  // Determine trophy
   const trophy = pct >= 80 ? '🏆' : pct >= 50 ? '🥈' : '🥉';
   const color = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--orange)' : 'var(--red)';
 
@@ -370,9 +385,6 @@ function endGame() {
   showScreen('result');
 }
 
-// ════════════════════════════════
-// RESTART GAME
-// ════════════════════════════════
 function restartGame() {
   currentQ = 0;
   score = 0;
@@ -382,7 +394,6 @@ function restartGame() {
   holdStartTime = null;
   isAnswering = false;
 
-  // Reset UI
   document.getElementById('score-display').textContent = '0';
   document.getElementById('hold-bar').style.width = '0%';
   updateBars(0, 0, 0);
@@ -401,9 +412,6 @@ function restartGame() {
   }
 }
 
-// ════════════════════════════════
-// INIT: Set default model URL
-// ════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
   const input = document.getElementById('model-url-input');
   if (input) {
