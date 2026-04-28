@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<!-- SCREEN: INTRO -->
+<!-- SCREEN: INTRO (sama seperti sebelumnya, tidak saya ubah agar tidak terlalu panjang) -->
 <div id="screen-intro" class="screen active">
   <div class="blob" style="width:280px;height:280px;background:var(--blue);opacity:0.07;top:-80px;left:-80px;"></div>
   <div class="blob" style="width:220px;height:220px;background:var(--orange);opacity:0.08;bottom:-50px;right:-50px;"></div>
@@ -21,39 +21,15 @@
   <div class="wave-logo">
     <span class="w1">H</span><span class="w2">a</span><span class="w3">n</span><span class="w4">d</span><span class="w5">S</span><span class="w6">t</span><span class="w7">r</span><span class="w8">i</span><span class="w9">k</span><span class="w10">e</span>
   </div>
-
   <div class="wave-tagline">✦ Media Pembelajaran Berbasis Gestur Tangan ✦</div>
-
-  <p class="intro-sub">
-    Jawab kuis dengan gerakan tanganmu!<br>
-    Angkat tangan kiri atau kanan, dan AI mendeteksi pilihanmu secara real-time.
-  </p>
-
+  <p class="intro-sub">Jawab kuis dengan gerakan tanganmu!<br>Angkat tangan kiri atau kanan, dan AI mendeteksi pilihanmu secara real-time.</p>
   <div class="intro-steps">
-    <div class="step-card">
-      <div class="step-num">1</div>
-      <span class="step-icon">📷</span>
-      <div class="step-label">Izinkan akses kamera</div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">2</div>
-      <span class="step-icon">🤖</span>
-      <div class="step-label">Load model AI</div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">3</div>
-      <span class="step-icon">✋</span>
-      <div class="step-label">Angkat tangan kiri / kanan</div>
-    </div>
-    <div class="step-card">
-      <div class="step-num">4</div>
-      <span class="step-icon">🎯</span>
-      <div class="step-label">Tahan untuk menjawab</div>
-    </div>
+    <div class="step-card"><div class="step-num">1</div><span class="step-icon">📷</span><div class="step-label">Izinkan akses kamera</div></div>
+    <div class="step-card"><div class="step-num">2</div><span class="step-icon">🤖</span><div class="step-label">Load model AI</div></div>
+    <div class="step-card"><div class="step-num">3</div><span class="step-icon">✋</span><div class="step-label">Angkat tangan kiri / kanan</div></div>
+    <div class="step-card"><div class="step-num">4</div><span class="step-icon">🎯</span><div class="step-label">Tahan untuk menjawab</div></div>
   </div>
-
-  <button class="btn-primary" onclick="showScreen('setup')">🚀 Mulai Sekarang!</button>
-  <br>
+  <button class="btn-primary" onclick="showScreen('setup')">🚀 Mulai Sekarang!</button><br>
   <button class="btn-secondary" onclick="skipToGame()">⌨️ Lewati (pakai keyboard)</button>
 </div>
 
@@ -62,40 +38,19 @@
   <div class="setup-wrapper">
     <div class="setup-box">
       <div class="setup-title">⚙️ Setup Model AI</div>
-      <p>
-        Masukkan URL model Teachable Machine kamu.<br>
-        Model harus punya 3 class: <strong style="color:var(--blue)">kiri</strong>, <strong style="color:var(--red)">kanan</strong>, <strong style="color:var(--muted)">netral</strong>.
-      </p>
-
+      <p>Masukkan URL model Teachable Machine kamu.<br>Model harus punya 3 class: <strong style="color:var(--blue)">kiri</strong>, <strong style="color:var(--red)">kanan</strong>, <strong style="color:var(--muted)">netral</strong>.</p>
       <div class="url-input-wrap">
         <label>URL Model Teachable Machine (Pose)</label>
         <input type="text" id="model-url-input" placeholder="https://teachablemachine.withgoogle.com/models/xxxxx/" />
       </div>
-
       <div class="label-grid">
-        <div class="url-input-wrap">
-          <label>Label Kiri</label>
-          <input type="text" id="label-left" placeholder="kiri" value="kiri" />
-        </div>
-        <div class="url-input-wrap">
-          <label>Label Kanan</label>
-          <input type="text" id="label-right" placeholder="kanan" value="kanan" />
-        </div>
-        <div class="url-input-wrap">
-          <label>Label Netral</label>
-          <input type="text" id="label-neutral" placeholder="netral" value="netral" />
-        </div>
+        <div class="url-input-wrap"><label>Label Kiri</label><input type="text" id="label-left" placeholder="kiri" value="kiri" /></div>
+        <div class="url-input-wrap"><label>Label Kanan</label><input type="text" id="label-right" placeholder="kanan" value="kanan" /></div>
+        <div class="url-input-wrap"><label>Label Netral</label><input type="text" id="label-neutral" placeholder="netral" value="netral" /></div>
       </div>
-
       <div id="setup-status" class="setup-status"></div>
-
-      <button class="btn-primary" style="margin-top:24px;width:100%;font-size:17px;" onclick="loadModel()">
-        📷 Load Model & Buka Kamera
-      </button>
-      <br>
-      <button class="btn-secondary" style="margin-top:10px;width:100%;" onclick="showScreen('intro')">
-        ← Kembali
-      </button>
+      <button class="btn-primary" style="margin-top:24px;width:100%;font-size:17px;" onclick="loadModel()">📷 Load Model & Buka Kamera</button><br>
+      <button class="btn-secondary" style="margin-top:10px;width:100%;" onclick="showScreen('intro')">← Kembali</button>
     </div>
   </div>
 </div>
@@ -104,69 +59,27 @@
 <div id="screen-game" class="screen">
   <div class="cam-panel">
     <div class="cam-header">📷 Deteksi Gestur</div>
-    <div class="cam-view-wrap">
-      <canvas id="webcam-canvas" width="300" height="300"></canvas>
-    </div>
+    <div class="cam-view-wrap"><canvas id="webcam-canvas" width="300" height="300"></canvas></div>
     <div class="detect-section-title">Tingkat Kepercayaan AI</div>
     <div class="detect-bars">
-      <div class="detect-bar-item">
-        <span class="detect-bar-label left">← Kiri</span>
-        <div class="detect-bar-track"><div class="detect-bar-fill left" id="bar-left"></div></div>
-        <span class="detect-pct" id="pct-left">0%</span>
-      </div>
-      <div class="detect-bar-item">
-        <span class="detect-bar-label right">Kanan →</span>
-        <div class="detect-bar-track"><div class="detect-bar-fill right" id="bar-right"></div></div>
-        <span class="detect-pct" id="pct-right">0%</span>
-      </div>
-      <div class="detect-bar-item">
-        <span class="detect-bar-label neutral">Netral</span>
-        <div class="detect-bar-track"><div class="detect-bar-fill neutral" id="bar-neutral"></div></div>
-        <span class="detect-pct" id="pct-neutral">0%</span>
-      </div>
+      <div class="detect-bar-item"><span class="detect-bar-label left">← Kiri</span><div class="detect-bar-track"><div class="detect-bar-fill left" id="bar-left"></div></div><span class="detect-pct" id="pct-left">0%</span></div>
+      <div class="detect-bar-item"><span class="detect-bar-label right">Kanan →</span><div class="detect-bar-track"><div class="detect-bar-fill right" id="bar-right"></div></div><span class="detect-pct" id="pct-right">0%</span></div>
+      <div class="detect-bar-item"><span class="detect-bar-label neutral">Netral</span><div class="detect-bar-track"><div class="detect-bar-fill neutral" id="bar-neutral"></div></div><span class="detect-pct" id="pct-neutral">0%</span></div>
     </div>
-    <div class="gesture-display">
-      <div class="gesture-label">Gestur Terdeteksi</div>
-      <div class="gesture-value neutral" id="gesture-value">—</div>
-    </div>
-    <div class="hold-timer-wrap">
-      <div class="hold-timer-label">⏳ Tahan 1.5 detik untuk jawab</div>
-      <div class="hold-bar-track">
-        <div class="hold-bar-fill" id="hold-bar"></div>
-      </div>
-    </div>
+    <div class="gesture-display"><div class="gesture-label">Gestur Terdeteksi</div><div class="gesture-value neutral" id="gesture-value">—</div></div>
+    <div class="hold-timer-wrap"><div class="hold-timer-label">⏳ Tahan 1.5 detik untuk jawab</div><div class="hold-bar-track"><div class="hold-bar-fill" id="hold-bar"></div></div></div>
   </div>
-
   <div class="quiz-panel">
     <div class="quiz-topbar">
-      <div class="topbar-logo">
-        <span class="w1">H</span><span class="w2">a</span><span class="w3">n</span><span class="w4">d</span><span class="w5">S</span><span class="w6">t</span><span class="w7">r</span><span class="w8">i</span><span class="w9">k</span><span class="w10">e</span>
-      </div>
-      <div class="quiz-progress-wrap">
-        <div class="quiz-progress-label">
-          <span>Progress</span>
-          <span id="progress-text">1 / 5</span>
-        </div>
-        <div class="quiz-progress-track">
-          <div class="quiz-progress-fill" id="progress-fill" style="width:20%"></div>
-        </div>
-      </div>
+      <div class="topbar-logo"><span class="w1">H</span><span class="w2">a</span><span class="w3">n</span><span class="w4">d</span><span class="w5">S</span><span class="w6">t</span><span class="w7">r</span><span class="w8">i</span><span class="w9">k</span><span class="w10">e</span></div>
+      <div class="quiz-progress-wrap"><div class="quiz-progress-label"><span>Progress</span><span id="progress-text">1 / 5</span></div><div class="quiz-progress-track"><div class="quiz-progress-fill" id="progress-fill" style="width:20%"></div></div></div>
       <div class="quiz-score-badge">⭐ <span id="score-display">0</span> poin</div>
     </div>
     <div class="quiz-main">
-      <div class="question-bubble">
-        <div class="question-number" id="q-number">Pertanyaan 1</div>
-        <div class="question-text" id="q-text">Memuat pertanyaan...</div>
-      </div>
+      <div class="question-bubble"><div class="question-number" id="q-number">Pertanyaan 1</div><div class="question-text" id="q-text">Memuat pertanyaan...</div></div>
       <div class="choices-row">
-        <div class="choice-card left" id="choice-left">
-          <div class="choice-direction"><span class="choice-arrow">←</span> Tangan Kiri</div>
-          <div class="choice-text" id="choice-left-text">Pilihan A</div>
-        </div>
-        <div class="choice-card right" id="choice-right">
-          <div class="choice-direction">Tangan Kanan <span class="choice-arrow">→</span></div>
-          <div class="choice-text" id="choice-right-text">Pilihan B</div>
-        </div>
+        <div class="choice-card left" id="choice-left"><div class="choice-direction"><span class="choice-arrow">←</span> Tangan Kiri</div><div class="choice-text" id="choice-left-text">Pilihan A</div></div>
+        <div class="choice-card right" id="choice-right"><div class="choice-direction">Tangan Kanan <span class="choice-arrow">→</span></div><div class="choice-text" id="choice-right-text">Pilihan B</div></div>
       </div>
     </div>
   </div>
@@ -179,30 +92,20 @@
     <div class="result-title">Selesai!</div>
     <div class="result-score" id="result-pct">80%</div>
     <div class="result-label" id="result-label">Benar 4 dari 5 pertanyaan</div>
-    <div class="result-stats">
-      <div class="stat-chip correct">✅ Benar: <span id="stat-correct">4</span></div>
-      <div class="stat-chip wrong">❌ Salah: <span id="stat-wrong">1</span></div>
-      <div class="stat-chip time">⏱️ <span id="stat-time">—</span></div>
-    </div>
-    <div class="result-actions">
-      <button class="btn-green" onclick="restartGame()">🔁 Main Lagi</button>
-      <button class="btn-secondary" onclick="showScreen('intro')">🏠 Beranda</button>
-    </div>
+    <div class="result-stats"><div class="stat-chip correct">✅ Benar: <span id="stat-correct">4</span></div><div class="stat-chip wrong">❌ Salah: <span id="stat-wrong">1</span></div><div class="stat-chip time">⏱️ <span id="stat-time">—</span></div></div>
+    <div class="result-actions"><button class="btn-green" onclick="restartGame()">🔁 Main Lagi</button><button class="btn-secondary" onclick="showScreen('intro')">🏠 Beranda</button></div>
   </div>
 </div>
 
 <!-- OVERLAYS -->
-<div class="countdown-overlay" id="countdown-overlay">
-  <div class="countdown-number" id="countdown-num">3</div>
-</div>
-<div class="feedback-overlay" id="feedback-overlay">
-  <div class="feedback-bubble" id="feedback-bubble">✓</div>
-</div>
+<div class="countdown-overlay" id="countdown-overlay"><div class="countdown-number" id="countdown-num">3</div></div>
+<div class="feedback-overlay" id="feedback-overlay"><div class="feedback-bubble" id="feedback-bubble">✓</div></div>
 
-<!-- SCRIPTS - VERSI KOMPATIBEL (inilah yang diubah) -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+<!-- SCRIPTS - VERSI PALING STABIL (TENSORFLOW 3.9.0 + TM POSE 0.8.1) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.9.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8.1/dist/teachablemachine-pose.min.js"></script>
 <script src="quiz-data.js"></script>
 <script src="app.js"></script>
+
 </body>
 </html>
