@@ -153,32 +153,30 @@ async function startPredictionLoop() {
     return;
   }
 
-  // Ensure canvas has proper dimensions matching aspect ratio
-  const rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = rect.width * window.devicePixelRatio || 300;
-  canvas.height = rect.height * window.devicePixelRatio || 225;
+  // Set canvas size
+  const size = 300;
+  canvas.width = size;
+  canvas.height = size;
 
-  async function loop() {
+  async function predict() {
     try {
-      // Update webcam
-      webcam.update();
-      
-      // Get the internal canvas dari tmPose.Webcam
-      const webcamInternalCanvas = webcam.canvas;
-      
-      // Draw ke canvas kita
-      ctx.drawImage(webcamInternalCanvas, 0, 0, canvas.width, canvas.height);
-      
-      // Estimate pose
-      const { pose, posenetOutput } = await model.estimatePose(webcamInternalCanvas);
+      // Get pose estimation
+      const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+      // Get predictions
       const predictions = await model.predict(posenetOutput);
 
-      // Draw keypoints
-      if (pose) {
-        tmPose.drawKeypoints(pose.keypoints, 0.7, ctx);
+      // Draw webcam frame
+      if (webcam.canvas) {
+        ctx.drawImage(webcam.canvas, 0, 0);
+        // Draw keypoints dan skeleton
+        if (pose) {
+          const minPartConfidence = 0.5;
+          tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
+          tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
+        }
       }
 
-      // Parse predictions
+      // Parse predictions untuk gesture detection
       let leftConf = 0, rightConf = 0, neutralConf = 0;
       predictions.forEach(p => {
         const name = p.className.toLowerCase();
@@ -193,23 +191,23 @@ async function startPredictionLoop() {
 
       updateBars(leftConf, rightConf, neutralConf);
       processGesture(leftConf, rightConf);
-
-      // Loop dengan setTimeout
-      predictionLoop = setTimeout(loop, PREDICTION_INTERVAL);
     } catch (err) {
-      console.error('Prediction error:', err);
-      // Try again even on error
-      predictionLoop = setTimeout(loop, PREDICTION_INTERVAL);
+      console.error('Predict error:', err);
     }
   }
 
-  // Start the loop
+  async function loop() {
+    webcam.update(); // update webcam frame
+    await predict();
+    predictionLoop = requestAnimationFrame(loop);
+  }
+
   loop();
 }
 
 function stopPredictionLoop() {
   if (predictionLoop) {
-    clearTimeout(predictionLoop);
+    cancelAnimationFrame(predictionLoop);
     predictionLoop = null;
   }
 }
