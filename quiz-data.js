@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════
    quiz-data.js
    Data pertanyaan kuis HandStrike
-   Edit di sini untuk menambah/mengubah pertanyaan
 ═══════════════════════════════════════ */
 
 const QUIZ_DATA = [
@@ -36,13 +35,3 @@ const QUIZ_DATA = [
     correct: "right"
   },
 ];
-
-/* 
-   FORMAT PENAMBAHAN PERTANYAAN BARU:
-   {
-     question: "Pertanyaan kamu?",
-     left: "Pilihan tangan kiri",
-     right: "Pilihan tangan kanan",
-     correct: "left"  // atau "right"
-   },
-*/
