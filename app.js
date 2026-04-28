@@ -20,14 +20,15 @@ async function loadModel() {
 
     try {
         const statusText = document.getElementById('status-text');
-        if (statusText) statusText.innerText = "Memuat AI...";
+        if (statusText) statusText.innerText = "Memuat AI & Kamera...";
 
         model = await tmPose.load(modelURL, metadataURL);
         
         const size = 400;
         const flip = true;
         webcam = new tmPose.Webcam(size, size, flip);
-        await webcam.setup();
+
+        await webcam.setup(); // ⬅️ ini sekarang dipanggil setelah klik
         await webcam.play();
 
         const canvas = document.getElementById('webcam-canvas');
@@ -36,13 +37,15 @@ async function loadModel() {
         ctx = canvas.getContext('2d');
 
         isModelLoaded = true;
+
         if (statusText) statusText.style.display = "none";
-        
+
         startPredictionLoop();
-        loadQuestion(0); // Mulai kuis pertama kali
+        loadQuestion(0);
+
     } catch (e) {
-        console.error(e);
-        alert("Gagal akses kamera. Pastikan menggunakan HTTPS dan izinkan akses kamera.");
+        console.error("ERROR DETAIL:", e);
+        alert("Gagal akses kamera: " + e.message);
     }
 }
 
@@ -56,7 +59,6 @@ async function loop() {
 
     webcam.update(); 
 
-    // MENGGAMBAR KE CANVAS (Solusi Layar Hitam)
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.drawImage(webcam.canvas, 0, 0);
 
@@ -91,11 +93,14 @@ function updateBars(predictions) {
 
 function handlePrediction(prediction) {
     const gestureText = document.getElementById('detected-gesture');
+
     if (prediction.probability > CONFIDENCE_THRESHOLD) {
         gestureText.innerText = prediction.className.toUpperCase();
+
         if (prediction.className === 'kanan') startFillingBar('right');
         else if (prediction.className === 'kiri') startFillingBar('left');
         else resetBars();
+
     } else {
         gestureText.innerText = "-";
         resetBars();
@@ -107,12 +112,14 @@ function startFillingBar(side) {
         currentTarget = side;
         fillStartTime = Date.now();
     }
+
     const elapsed = Date.now() - fillStartTime;
     const progress = Math.min((elapsed / FILL_DURATION) * 100, 100);
+
     document.getElementById('answer-progress-bar').style.width = `${progress}%`;
 
     if (progress >= 100) {
-        checkAnswer(side === 'left' ? 'Jakarta' : 'Surabaya'); // Contoh sederhana, sesuaikan dengan logic kuis
+        checkAnswer(side === 'left' ? 'Jakarta' : 'Surabaya');
         resetBars();
     }
 }
@@ -123,9 +130,11 @@ function resetBars() {
     document.getElementById('answer-progress-bar').style.width = `0%`;
 }
 
-// Fungsi Kuis
+/* ===================== QUIZ ===================== */
+
 function loadQuestion(index) {
     const q = quizData[index];
+
     document.getElementById('question-text').innerText = q.question;
     document.getElementById('option-left').innerText = q.options.left;
     document.getElementById('option-right').innerText = q.options.right;
@@ -134,20 +143,27 @@ function loadQuestion(index) {
 
 function checkAnswer(selectedAnswer) {
     const currentQuestion = quizData[currentQuestionIndex];
+
     if (selectedAnswer === currentQuestion.correctAnswer) {
         score += 20;
         document.getElementById('score-display').innerText = `${score} poin`;
     }
-    
+
     currentQuestionIndex++;
+
     if (currentQuestionIndex < quizData.length) {
         loadQuestion(currentQuestionIndex);
+
         const progress = ((currentQuestionIndex) / quizData.length) * 100;
-        document.querySelector('.progress').style.width = `${progress}%`;
+        document.querySelector('.quiz-progress-fill').style.width = `${progress}%`;
+
     } else {
         alert(`Kuis Selesai! Skor akhir kamu: ${score}`);
         location.reload();
     }
 }
 
-window.onload = loadModel;
+/* ===================== START BUTTON ===================== */
+
+// WAJIB: trigger dari user
+document.getElementById("start-btn").addEventListener("click", loadModel);
