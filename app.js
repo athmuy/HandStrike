@@ -1,7 +1,10 @@
-/* app.js - Final Fix */
+/* ═══════════════════════════════════════
+   app.js - FIXED CAMERA & LIBRARY VERSION
+═══════════════════════════════════════ */
+
 const HOLD_DURATION = 1500;
 const CONFIDENCE_THRESHOLD = 0.75;
-const DEFAULT_MODEL_URL = "https://teachablemachine.withgoogle.com/models/SoddPQAQH/";
+const DEFAULT_MODEL_URL = "https://teachablemachine.withgoogle.com/models/rsT6VZXS5/";
 
 let model = null;
 let webcam = null;
@@ -14,13 +17,15 @@ let currentGesture = null;
 let holdStartTime = null;
 let isAnswering = false;
 let predictionLoop = null;
-let classLabels = { left: 'left', right: 'right', neutral: 'neutral' };
+let classLabels = { left: 'kiri', right: 'kanan', neutral: 'netral' };
 
+// Screen navigation
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
 }
 
+// Keyboard fallback
 function skipToGame() {
   isCameraMode = false;
   document.querySelector('.cam-panel').style.opacity = '0.5';
@@ -37,34 +42,42 @@ function keyboardFallback(e) {
   if (e.key === 'ArrowRight') submitAnswer('right');
 }
 
+// Load model & camera
 async function loadModel() {
   let urlInput = document.getElementById('model-url-input').value.trim();
   if (!urlInput) {
     urlInput = DEFAULT_MODEL_URL;
     document.getElementById('model-url-input').value = DEFAULT_MODEL_URL;
   }
-  classLabels.left = document.getElementById('label-left').value || 'left';
-  classLabels.right = document.getElementById('label-right').value || 'right';
-  classLabels.neutral = document.getElementById('label-neutral').value || 'neutral';
+
+  classLabels.left = document.getElementById('label-left').value || 'kiri';
+  classLabels.right = document.getElementById('label-right').value || 'kanan';
+  classLabels.neutral = document.getElementById('label-neutral').value || 'netral';
+
   const modelURL = urlInput.endsWith('/') ? urlInput : urlInput + '/';
   setStatus('loading', '<span class="spinner"></span> Memuat model...');
+
   try {
     model = await tmPose.load(modelURL + 'model.json', modelURL + 'metadata.json');
     setStatus('loading', '<span class="spinner"></span> Membuka kamera...');
+
     const size = 300;
     webcam = new tmPose.Webcam(size, size, true);
     await webcam.setup();
     await webcam.play();
+
     if (webcam.video) {
       webcam.video.setAttribute('playsinline', '');
       await webcam.video.play();
-      console.log("Video stream aktif");
+      console.log("✅ Video stream aktif");
     }
+
     isCameraMode = true;
     const canvas = document.getElementById('webcam-canvas');
     canvas.width = size;
     canvas.height = size;
-    setStatus('success', '✅ Siap! 3 detik lagi...');
+
+    setStatus('success', '✅ Model & kamera siap! 3 detik lagi...');
     setTimeout(() => startCountdown(), 800);
   } catch (err) {
     setStatus('error', '❌ Gagal: ' + err.message);
@@ -104,30 +117,20 @@ function startCountdown() {
 
 async function startPredictionLoop() {
   if (!isCameraMode || !model || !webcam) return;
+
   const canvas = document.getElementById('webcam-canvas');
   const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
   async function loop() {
     if (!isCameraMode || !model || !webcam) return;
+
     try {
       webcam.update();
-      // Perbaikan: pastikan webcam.canvas memiliki data, jika tidak, gunakan video
-      let inputCanvas = webcam.canvas;
-      if (!inputCanvas || inputCanvas.width === 0) {
-        // fallback: buat canvas sementara dari video
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        if (webcam.video && webcam.video.readyState >= 2) {
-          tempCtx.drawImage(webcam.video, 0, 0, tempCanvas.width, tempCanvas.height);
-          inputCanvas = tempCanvas;
-        } else {
-          throw new Error("No video frame");
-        }
-      }
-      const { pose, posenetOutput } = await model.estimatePose(inputCanvas);
+      const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
       const predictions = await model.predict(posenetOutput);
-      // Gambar video ke canvas utama
+
+      // Gambar video dari webcam.video (fix hitam)
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (webcam.video && webcam.video.readyState >= 2) {
         ctx.save();
@@ -135,10 +138,16 @@ async function startPredictionLoop() {
         ctx.drawImage(webcam.video, -canvas.width, 0, canvas.width, canvas.height);
         ctx.restore();
       }
+
+      // Gambar skeleton jika ada pose
       if (pose) {
-        tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
-        tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
+        try {
+          tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
+          tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
+        } catch(e) {}
       }
+
+      // Parse prediksi
       let leftConf = 0, rightConf = 0, neutralConf = 0;
       predictions.forEach(p => {
         const name = p.className.toLowerCase();
@@ -146,12 +155,13 @@ async function startPredictionLoop() {
         else if (name === classLabels.right.toLowerCase()) rightConf = p.probability;
         else neutralConf = Math.max(neutralConf, p.probability);
       });
+
       updateBars(leftConf, rightConf, neutralConf);
       processGesture(leftConf, rightConf);
+
       predictionLoop = requestAnimationFrame(loop);
     } catch (err) {
-      console.error("Prediction error:", err);
-      // Jangan hentikan loop, coba lagi
+      console.error("Loop error:", err);
       predictionLoop = requestAnimationFrame(loop);
     }
   }
@@ -164,12 +174,12 @@ function stopPredictionLoop() {
 }
 
 function updateBars(l, r, n) {
-  document.getElementById('bar-left').style.width = (l*100)+'%';
-  document.getElementById('bar-right').style.width = (r*100)+'%';
-  document.getElementById('bar-neutral').style.width = (n*100)+'%';
-  document.getElementById('pct-left').innerText = Math.round(l*100)+'%';
-  document.getElementById('pct-right').innerText = Math.round(r*100)+'%';
-  document.getElementById('pct-neutral').innerText = Math.round(n*100)+'%';
+  document.getElementById('bar-left').style.width = (l * 100) + '%';
+  document.getElementById('bar-right').style.width = (r * 100) + '%';
+  document.getElementById('bar-neutral').style.width = (n * 100) + '%';
+  document.getElementById('pct-left').textContent = Math.round(l * 100) + '%';
+  document.getElementById('pct-right').textContent = Math.round(r * 100) + '%';
+  document.getElementById('pct-neutral').textContent = Math.round(n * 100) + '%';
 }
 
 function processGesture(leftConf, rightConf) {
@@ -177,13 +187,16 @@ function processGesture(leftConf, rightConf) {
   let detected = null;
   if (leftConf > CONFIDENCE_THRESHOLD && leftConf > rightConf) detected = 'left';
   else if (rightConf > CONFIDENCE_THRESHOLD && rightConf > leftConf) detected = 'right';
+
   const gestureEl = document.getElementById('gesture-value');
   const holdBar = document.getElementById('hold-bar');
+
   if (detected) {
     gestureEl.textContent = detected === 'left' ? '← Kiri' : 'Kanan →';
     gestureEl.className = 'gesture-value ' + detected;
     document.getElementById('choice-left').classList.toggle('active', detected === 'left');
     document.getElementById('choice-right').classList.toggle('active', detected === 'right');
+
     if (detected !== currentGesture) {
       currentGesture = detected;
       holdStartTime = Date.now();
@@ -216,13 +229,13 @@ function loadQuestion(index) {
   document.getElementById('choice-left').className = 'choice-card left';
   document.getElementById('choice-right').className = 'choice-card right';
   const q = QUIZ_DATA[index];
-  document.getElementById('q-number').innerText = 'Pertanyaan ' + (index+1);
-  document.getElementById('q-text').innerText = q.question;
-  document.getElementById('choice-left-text').innerText = q.left;
-  document.getElementById('choice-right-text').innerText = q.right;
-  const pct = ((index+1)/QUIZ_DATA.length)*100;
-  document.getElementById('progress-fill').style.width = pct+'%';
-  document.getElementById('progress-text').innerText = (index+1)+' / '+QUIZ_DATA.length;
+  document.getElementById('q-number').textContent = 'Pertanyaan ' + (index + 1);
+  document.getElementById('q-text').textContent = q.question;
+  document.getElementById('choice-left-text').textContent = q.left;
+  document.getElementById('choice-right-text').textContent = q.right;
+  const pct = ((index + 1) / QUIZ_DATA.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = (index + 1) + ' / ' + QUIZ_DATA.length;
 }
 
 function submitAnswer(side) {
@@ -234,17 +247,17 @@ function submitAnswer(side) {
   if (isCorrect) {
     score += 10;
     correctCount++;
-    document.getElementById('score-display').innerText = score;
+    document.getElementById('score-display').textContent = score;
   }
-  document.getElementById('choice-'+q.correct).classList.add('correct');
+  document.getElementById('choice-' + q.correct).classList.add('correct');
   if (!isCorrect) {
     const wrongSide = q.correct === 'left' ? 'right' : 'left';
-    document.getElementById('choice-'+wrongSide).classList.add('wrong');
+    document.getElementById('choice-' + wrongSide).classList.add('wrong');
   }
   showFeedback(isCorrect);
   setTimeout(() => {
     hideFeedback();
-    loadQuestion(currentQ+1);
+    loadQuestion(currentQ + 1);
     if (isCameraMode) startPredictionLoop();
   }, 1500);
 }
@@ -252,7 +265,7 @@ function submitAnswer(side) {
 function showFeedback(isCorrect) {
   const overlay = document.getElementById('feedback-overlay');
   const bubble = document.getElementById('feedback-bubble');
-  bubble.innerText = isCorrect ? '✓' : '✗';
+  bubble.textContent = isCorrect ? '✓' : '✗';
   bubble.className = 'feedback-bubble ' + (isCorrect ? 'correct' : 'wrong');
   overlay.classList.add('show');
 }
@@ -263,25 +276,25 @@ function endGame() {
   if (webcam) webcam.stop();
   document.removeEventListener('keydown', keyboardFallback);
   const total = QUIZ_DATA.length;
-  const pct = Math.round((correctCount/total)*100);
-  const elapsed = Math.round((Date.now()-gameStartTime)/1000);
-  const timeStr = `${Math.floor(elapsed/60)}m ${elapsed%60}s`;
-  document.getElementById('result-trophy').innerText = pct>=80 ? '🏆' : (pct>=50 ? '🥈' : '🥉');
-  document.getElementById('result-pct').innerText = pct+'%';
-  document.getElementById('result-label').innerText = `Benar ${correctCount} dari ${total}`;
-  document.getElementById('stat-correct').innerText = correctCount;
-  document.getElementById('stat-wrong').innerText = total-correctCount;
-  document.getElementById('stat-time').innerText = timeStr;
+  const pct = Math.round((correctCount / total) * 100);
+  const elapsed = Math.round((Date.now() - gameStartTime) / 1000);
+  const timeStr = `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
+  document.getElementById('result-trophy').textContent = pct >= 80 ? '🏆' : pct >= 50 ? '🥈' : '🥉';
+  document.getElementById('result-pct').textContent = pct + '%';
+  document.getElementById('result-label').textContent = `Benar ${correctCount} dari ${total}`;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-wrong').textContent = total - correctCount;
+  document.getElementById('stat-time').textContent = timeStr;
   showScreen('result');
 }
 
 function restartGame() {
   currentQ = 0; score = 0; correctCount = 0; gameStartTime = null;
   currentGesture = null; holdStartTime = null; isAnswering = false;
-  document.getElementById('score-display').innerText = '0';
+  document.getElementById('score-display').textContent = '0';
   document.getElementById('hold-bar').style.width = '0%';
   updateBars(0,0,0);
-  document.getElementById('gesture-value').innerText = '—';
+  document.getElementById('gesture-value').textContent = '—';
   showScreen('game');
   loadQuestion(0);
   gameStartTime = Date.now();
