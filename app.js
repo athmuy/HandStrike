@@ -42,11 +42,10 @@ function keyboardFallback(e) {
   if (e.key === 'ArrowRight') submitAnswer('right');
 }
 
-// Load model & camera — menggunakan window.tmPose agar aman dari masalah scope
+// Load model & camera
 async function loadModel() {
-  // Cek dulu apakah library sudah termuat
   if (typeof window.tmPose === 'undefined') {
-    setStatus('error', '❌ Library Teachable Machine belum termuat. Pastikan koneksi internet aktif lalu refresh halaman (Ctrl+F5).');
+    setStatus('error', '❌ Library Teachable Machine belum termuat. Pastikan koneksi internet aktif lalu refresh (Ctrl+F5).');
     return;
   }
 
@@ -64,20 +63,14 @@ async function loadModel() {
   setStatus('loading', '<span class="spinner"></span> Memuat model...');
 
   try {
-    // Gunakan window.tmPose agar tidak error "tmPose is not defined"
     model = await window.tmPose.load(modelURL + 'model.json', modelURL + 'metadata.json');
     setStatus('loading', '<span class="spinner"></span> Membuka kamera...');
 
     const size = 300;
-    webcam = new window.tmPose.Webcam(size, size, true); // flip = true (mirror)
+    // flip=true → webcam.canvas sudah di-mirror oleh library, tidak perlu flip manual lagi
+    webcam = new window.tmPose.Webcam(size, size, true);
     await webcam.setup();
     await webcam.play();
-
-    if (webcam.video) {
-      webcam.video.setAttribute('playsinline', '');
-      await webcam.video.play();
-      console.log("✅ Video stream aktif");
-    }
 
     isCameraMode = true;
     const canvas = document.getElementById('webcam-canvas');
@@ -133,20 +126,19 @@ async function startPredictionLoop() {
     if (!isCameraMode || !model || !webcam) return;
 
     try {
+      // Ambil frame terbaru ke webcam.canvas
       webcam.update();
+
+      // Estimasi pose dari webcam.canvas (bukan webcam.video)
       const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
       const predictions = await model.predict(posenetOutput);
 
-      // Gambar video dari webcam.video (fix layar hitam)
+      // Gambar webcam.canvas langsung ke canvas kita
+      // Tidak perlu flip manual — library sudah handle karena flip=true saat new Webcam()
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (webcam.video && webcam.video.readyState >= 2) {
-        ctx.save();
-        ctx.scale(-1, 1);
-        ctx.drawImage(webcam.video, -canvas.width, 0, canvas.width, canvas.height);
-        ctx.restore();
-      }
+      ctx.drawImage(webcam.canvas, 0, 0, canvas.width, canvas.height);
 
-      // Gambar skeleton jika pose terdeteksi
+      // Overlay skeleton
       if (pose) {
         try {
           window.tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
@@ -158,8 +150,8 @@ async function startPredictionLoop() {
       let leftConf = 0, rightConf = 0, neutralConf = 0;
       predictions.forEach(p => {
         const name = p.className.toLowerCase();
-        if      (name === classLabels.left.toLowerCase())    leftConf    = p.probability;
-        else if (name === classLabels.right.toLowerCase())   rightConf   = p.probability;
+        if      (name === classLabels.left.toLowerCase())  leftConf    = p.probability;
+        else if (name === classLabels.right.toLowerCase()) rightConf   = p.probability;
         else    neutralConf = Math.max(neutralConf, p.probability);
       });
 
@@ -241,8 +233,8 @@ function loadQuestion(index) {
   document.getElementById('choice-left-text').textContent  = q.left;
   document.getElementById('choice-right-text').textContent = q.right;
   const pct = ((index + 1) / QUIZ_DATA.length) * 100;
-  document.getElementById('progress-fill').style.width  = pct + '%';
-  document.getElementById('progress-text').textContent  = (index + 1) + ' / ' + QUIZ_DATA.length;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = (index + 1) + ' / ' + QUIZ_DATA.length;
 }
 
 function submitAnswer(side) {
