@@ -251,7 +251,7 @@ body::before {
   height: 100%;
   object-fit: cover;
   display: block;
-  transform: scaleX(-1);
+  /* transform: scaleX(-1) DIHAPUS — flip sudah ditangani library (flip=true) di app.js */
   background: #000;
 }
 .detect-section-title { font-size: 11px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
