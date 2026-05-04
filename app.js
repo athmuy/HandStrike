@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════
-   app.js - FIXED CAMERA & LIBRARY VERSION
+   app.js - FIXED: draw from webcam.video
 ═══════════════════════════════════════ */
 
 const HOLD_DURATION = 1500;
@@ -45,7 +45,7 @@ function keyboardFallback(e) {
 // Load model & camera
 async function loadModel() {
   if (typeof window.tmPose === 'undefined') {
-    setStatus('error', '❌ Library Teachable Machine belum termuat. Pastikan koneksi internet aktif lalu refresh (Ctrl+F5).');
+    setStatus('error', '❌ Library belum termuat. Refresh halaman (Ctrl+F5).');
     return;
   }
 
@@ -67,8 +67,8 @@ async function loadModel() {
     setStatus('loading', '<span class="spinner"></span> Membuka kamera...');
 
     const size = 300;
-    // flip=true → webcam.canvas sudah di-mirror oleh library, tidak perlu flip manual lagi
-    webcam = new window.tmPose.Webcam(size, size, true);
+    // flip=false — kita akan flip sendiri di canvas agar bebas dari bug webcam.canvas
+    webcam = new window.tmPose.Webcam(size, size, false);
     await webcam.setup();
     await webcam.play();
 
@@ -126,19 +126,28 @@ async function startPredictionLoop() {
     if (!isCameraMode || !model || !webcam) return;
 
     try {
-      // Ambil frame terbaru ke webcam.canvas
-      webcam.update();
+      webcam.update(); // update internal webcam.canvas untuk estimatePose
 
-      // Estimasi pose dari webcam.canvas (bukan webcam.video)
+      // Estimasi pose dari webcam.canvas (wajib, ini yang model pakai)
       const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
       const predictions = await model.predict(posenetOutput);
 
-      // Gambar webcam.canvas langsung ke canvas kita
-      // Tidak perlu flip manual — library sudah handle karena flip=true saat new Webcam()
+      // ── Gambar video ke canvas kita ──────────────────────────────
+      // Gunakan webcam.video langsung agar tidak bergantung pada
+      // webcam.canvas yang kadang kosong di beberapa environment.
+      // Flip mirror dilakukan manual dengan ctx.translate + ctx.scale.
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(webcam.canvas, 0, 0, canvas.width, canvas.height);
 
-      // Overlay skeleton
+      const vid = webcam.video;
+      if (vid && vid.readyState >= 2) {
+        ctx.save();
+        ctx.translate(canvas.width, 0); // geser ke kanan
+        ctx.scale(-1, 1);               // flip horizontal
+        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      // ── Overlay skeleton pose ────────────────────────────────────
       if (pose) {
         try {
           window.tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
@@ -146,7 +155,7 @@ async function startPredictionLoop() {
         } catch(e) {}
       }
 
-      // Parse prediksi
+      // ── Parse prediksi ───────────────────────────────────────────
       let leftConf = 0, rightConf = 0, neutralConf = 0;
       predictions.forEach(p => {
         const name = p.className.toLowerCase();
