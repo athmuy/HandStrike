@@ -4,7 +4,7 @@
 
 const HOLD_DURATION = 1500;
 const CONFIDENCE_THRESHOLD = 0.75;
-const DEFAULT_MODEL_URL = "https://teachablemachine.withgoogle.com/models/SoddPQAQH/";
+const DEFAULT_MODEL_URL = "https://teachablemachine.withgoogle.com/models/rsT6VZXS5/";
 
 let model = null;
 let webcam = null;
@@ -42,27 +42,34 @@ function keyboardFallback(e) {
   if (e.key === 'ArrowRight') submitAnswer('right');
 }
 
-// Load model & camera
+// Load model & camera — menggunakan window.tmPose agar aman dari masalah scope
 async function loadModel() {
+  // Cek dulu apakah library sudah termuat
+  if (typeof window.tmPose === 'undefined') {
+    setStatus('error', '❌ Library Teachable Machine belum termuat. Pastikan koneksi internet aktif lalu refresh halaman (Ctrl+F5).');
+    return;
+  }
+
   let urlInput = document.getElementById('model-url-input').value.trim();
   if (!urlInput) {
     urlInput = DEFAULT_MODEL_URL;
     document.getElementById('model-url-input').value = DEFAULT_MODEL_URL;
   }
 
-  classLabels.left = document.getElementById('label-left').value || 'kiri';
-  classLabels.right = document.getElementById('label-right').value || 'kanan';
+  classLabels.left    = document.getElementById('label-left').value    || 'kiri';
+  classLabels.right   = document.getElementById('label-right').value   || 'kanan';
   classLabels.neutral = document.getElementById('label-neutral').value || 'netral';
 
   const modelURL = urlInput.endsWith('/') ? urlInput : urlInput + '/';
   setStatus('loading', '<span class="spinner"></span> Memuat model...');
 
   try {
-    model = await tmPose.load(modelURL + 'model.json', modelURL + 'metadata.json');
+    // Gunakan window.tmPose agar tidak error "tmPose is not defined"
+    model = await window.tmPose.load(modelURL + 'model.json', modelURL + 'metadata.json');
     setStatus('loading', '<span class="spinner"></span> Membuka kamera...');
 
     const size = 300;
-    webcam = new tmPose.Webcam(size, size, true);
+    webcam = new window.tmPose.Webcam(size, size, true); // flip = true (mirror)
     await webcam.setup();
     await webcam.play();
 
@@ -74,7 +81,7 @@ async function loadModel() {
 
     isCameraMode = true;
     const canvas = document.getElementById('webcam-canvas');
-    canvas.width = size;
+    canvas.width  = size;
     canvas.height = size;
 
     setStatus('success', '✅ Model & kamera siap! 3 detik lagi...');
@@ -93,7 +100,7 @@ function setStatus(type, html) {
 
 function startCountdown() {
   const overlay = document.getElementById('countdown-overlay');
-  const numEl = document.getElementById('countdown-num');
+  const numEl   = document.getElementById('countdown-num');
   overlay.style.display = 'flex';
   let count = 3;
   numEl.textContent = count;
@@ -119,7 +126,7 @@ async function startPredictionLoop() {
   if (!isCameraMode || !model || !webcam) return;
 
   const canvas = document.getElementById('webcam-canvas');
-  const ctx = canvas.getContext('2d');
+  const ctx    = canvas.getContext('2d');
   if (!ctx) return;
 
   async function loop() {
@@ -130,7 +137,7 @@ async function startPredictionLoop() {
       const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
       const predictions = await model.predict(posenetOutput);
 
-      // Gambar video dari webcam.video (fix hitam)
+      // Gambar video dari webcam.video (fix layar hitam)
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (webcam.video && webcam.video.readyState >= 2) {
         ctx.save();
@@ -139,11 +146,11 @@ async function startPredictionLoop() {
         ctx.restore();
       }
 
-      // Gambar skeleton jika ada pose
+      // Gambar skeleton jika pose terdeteksi
       if (pose) {
         try {
-          tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
-          tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
+          window.tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
+          window.tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
         } catch(e) {}
       }
 
@@ -151,9 +158,9 @@ async function startPredictionLoop() {
       let leftConf = 0, rightConf = 0, neutralConf = 0;
       predictions.forEach(p => {
         const name = p.className.toLowerCase();
-        if (name === classLabels.left.toLowerCase()) leftConf = p.probability;
-        else if (name === classLabels.right.toLowerCase()) rightConf = p.probability;
-        else neutralConf = Math.max(neutralConf, p.probability);
+        if      (name === classLabels.left.toLowerCase())    leftConf    = p.probability;
+        else if (name === classLabels.right.toLowerCase())   rightConf   = p.probability;
+        else    neutralConf = Math.max(neutralConf, p.probability);
       });
 
       updateBars(leftConf, rightConf, neutralConf);
@@ -174,32 +181,32 @@ function stopPredictionLoop() {
 }
 
 function updateBars(l, r, n) {
-  document.getElementById('bar-left').style.width = (l * 100) + '%';
-  document.getElementById('bar-right').style.width = (r * 100) + '%';
+  document.getElementById('bar-left').style.width    = (l * 100) + '%';
+  document.getElementById('bar-right').style.width   = (r * 100) + '%';
   document.getElementById('bar-neutral').style.width = (n * 100) + '%';
-  document.getElementById('pct-left').textContent = Math.round(l * 100) + '%';
-  document.getElementById('pct-right').textContent = Math.round(r * 100) + '%';
+  document.getElementById('pct-left').textContent    = Math.round(l * 100) + '%';
+  document.getElementById('pct-right').textContent   = Math.round(r * 100) + '%';
   document.getElementById('pct-neutral').textContent = Math.round(n * 100) + '%';
 }
 
 function processGesture(leftConf, rightConf) {
   if (isAnswering) return;
   let detected = null;
-  if (leftConf > CONFIDENCE_THRESHOLD && leftConf > rightConf) detected = 'left';
-  else if (rightConf > CONFIDENCE_THRESHOLD && rightConf > leftConf) detected = 'right';
+  if      (leftConf  > CONFIDENCE_THRESHOLD && leftConf  > rightConf) detected = 'left';
+  else if (rightConf > CONFIDENCE_THRESHOLD && rightConf > leftConf)  detected = 'right';
 
   const gestureEl = document.getElementById('gesture-value');
-  const holdBar = document.getElementById('hold-bar');
+  const holdBar   = document.getElementById('hold-bar');
 
   if (detected) {
     gestureEl.textContent = detected === 'left' ? '← Kiri' : 'Kanan →';
-    gestureEl.className = 'gesture-value ' + detected;
-    document.getElementById('choice-left').classList.toggle('active', detected === 'left');
+    gestureEl.className   = 'gesture-value ' + detected;
+    document.getElementById('choice-left').classList.toggle('active',  detected === 'left');
     document.getElementById('choice-right').classList.toggle('active', detected === 'right');
 
     if (detected !== currentGesture) {
       currentGesture = detected;
-      holdStartTime = Date.now();
+      holdStartTime  = Date.now();
     } else {
       const progress = Math.min((Date.now() - holdStartTime) / HOLD_DURATION, 1);
       holdBar.style.width = (progress * 100) + '%';
@@ -210,9 +217,9 @@ function processGesture(leftConf, rightConf) {
     }
   } else {
     gestureEl.textContent = '—';
-    gestureEl.className = 'gesture-value neutral';
-    currentGesture = null;
-    holdStartTime = null;
+    gestureEl.className   = 'gesture-value neutral';
+    currentGesture  = null;
+    holdStartTime   = null;
     holdBar.style.width = '0%';
     document.getElementById('choice-left').classList.remove('active');
     document.getElementById('choice-right').classList.remove('active');
@@ -221,28 +228,28 @@ function processGesture(leftConf, rightConf) {
 
 function loadQuestion(index) {
   if (index >= QUIZ_DATA.length) return endGame();
-  currentQ = index;
-  isAnswering = false;
+  currentQ       = index;
+  isAnswering    = false;
   currentGesture = null;
-  holdStartTime = null;
-  document.getElementById('hold-bar').style.width = '0%';
-  document.getElementById('choice-left').className = 'choice-card left';
+  holdStartTime  = null;
+  document.getElementById('hold-bar').style.width    = '0%';
+  document.getElementById('choice-left').className  = 'choice-card left';
   document.getElementById('choice-right').className = 'choice-card right';
   const q = QUIZ_DATA[index];
-  document.getElementById('q-number').textContent = 'Pertanyaan ' + (index + 1);
-  document.getElementById('q-text').textContent = q.question;
-  document.getElementById('choice-left-text').textContent = q.left;
+  document.getElementById('q-number').textContent          = 'Pertanyaan ' + (index + 1);
+  document.getElementById('q-text').textContent            = q.question;
+  document.getElementById('choice-left-text').textContent  = q.left;
   document.getElementById('choice-right-text').textContent = q.right;
   const pct = ((index + 1) / QUIZ_DATA.length) * 100;
-  document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('progress-text').textContent = (index + 1) + ' / ' + QUIZ_DATA.length;
+  document.getElementById('progress-fill').style.width  = pct + '%';
+  document.getElementById('progress-text').textContent  = (index + 1) + ' / ' + QUIZ_DATA.length;
 }
 
 function submitAnswer(side) {
   if (isAnswering) return;
   isAnswering = true;
   stopPredictionLoop();
-  const q = QUIZ_DATA[currentQ];
+  const q         = QUIZ_DATA[currentQ];
   const isCorrect = side === q.correct;
   if (isCorrect) {
     score += 10;
@@ -264,9 +271,9 @@ function submitAnswer(side) {
 
 function showFeedback(isCorrect) {
   const overlay = document.getElementById('feedback-overlay');
-  const bubble = document.getElementById('feedback-bubble');
+  const bubble  = document.getElementById('feedback-bubble');
   bubble.textContent = isCorrect ? '✓' : '✗';
-  bubble.className = 'feedback-bubble ' + (isCorrect ? 'correct' : 'wrong');
+  bubble.className   = 'feedback-bubble ' + (isCorrect ? 'correct' : 'wrong');
   overlay.classList.add('show');
 }
 function hideFeedback() { document.getElementById('feedback-overlay').classList.remove('show'); }
@@ -275,16 +282,16 @@ function endGame() {
   stopPredictionLoop();
   if (webcam) webcam.stop();
   document.removeEventListener('keydown', keyboardFallback);
-  const total = QUIZ_DATA.length;
-  const pct = Math.round((correctCount / total) * 100);
+  const total   = QUIZ_DATA.length;
+  const pct     = Math.round((correctCount / total) * 100);
   const elapsed = Math.round((Date.now() - gameStartTime) / 1000);
   const timeStr = `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
   document.getElementById('result-trophy').textContent = pct >= 80 ? '🏆' : pct >= 50 ? '🥈' : '🥉';
-  document.getElementById('result-pct').textContent = pct + '%';
-  document.getElementById('result-label').textContent = `Benar ${correctCount} dari ${total}`;
-  document.getElementById('stat-correct').textContent = correctCount;
-  document.getElementById('stat-wrong').textContent = total - correctCount;
-  document.getElementById('stat-time').textContent = timeStr;
+  document.getElementById('result-pct').textContent    = pct + '%';
+  document.getElementById('result-label').textContent  = `Benar ${correctCount} dari ${total}`;
+  document.getElementById('stat-correct').textContent  = correctCount;
+  document.getElementById('stat-wrong').textContent    = total - correctCount;
+  document.getElementById('stat-time').textContent     = timeStr;
   showScreen('result');
 }
 
@@ -293,7 +300,7 @@ function restartGame() {
   currentGesture = null; holdStartTime = null; isAnswering = false;
   document.getElementById('score-display').textContent = '0';
   document.getElementById('hold-bar').style.width = '0%';
-  updateBars(0,0,0);
+  updateBars(0, 0, 0);
   document.getElementById('gesture-value').textContent = '—';
   showScreen('game');
   loadQuestion(0);
