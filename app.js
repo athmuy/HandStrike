@@ -324,6 +324,10 @@ function submitAnswer(side) {
     correctCount++;
     document.getElementById('score-display').textContent = score;
   }
+  
+  // Putar efek suara ding/bzz
+  playSound(isCorrect ? 'correct' : 'wrong');
+  
   document.getElementById('choice-' + q.correct).classList.add('correct');
   if (!isCorrect) {
     const wrongSide = q.correct === 'left' ? 'right' : 'left';
@@ -339,7 +343,8 @@ function submitAnswer(side) {
 function showFeedback(isCorrect) {
   const overlay = document.getElementById('feedback-overlay');
   const bubble  = document.getElementById('feedback-bubble');
-  bubble.textContent = isCorrect ? '✓' : '✗';
+  const emoji = isCorrect ? '✔️' : '❌';
+  bubble.innerHTML = `<img class="apple-emoji" style="width: 80px; height: 80px;" src="https://emojicdn.elk.sh/${emoji}" alt="${emoji}">`;
   bubble.className   = 'feedback-bubble ' + (isCorrect ? 'correct' : 'wrong');
   overlay.classList.add('show');
 }
@@ -405,6 +410,9 @@ async function endGame() {
 
   // Memuat peringkat kelas terbaru secara real-time
   await loadClassLeaderboard(pct, timeStr);
+
+  // Putar efek suara kemenangan
+  playSound('win');
 
   const trophyImg = pct >= 80 ? '🏆' : pct >= 50 ? '🥈' : '🥉';
   document.getElementById('result-trophy').innerHTML = `<img class="apple-emoji" style="width: 72px; height: 72px;" src="https://emojicdn.elk.sh/${trophyImg}" alt="trophy">`;
@@ -612,13 +620,37 @@ async function renderQuestionList() {
   cancelEdit();
 }
 
+let cachedScores = [];
+
 async function renderScoreList() {
-  const scores = await getStudentScores();
+  cachedScores = await getStudentScores();
+  const filterInput = document.getElementById('score-filter-input');
+  const filterLevel = document.getElementById('score-filter-level');
+  if (filterInput) filterInput.value = '';
+  if (filterLevel) filterLevel.value = 'all';
+  filterScoreTable();
+}
+
+function filterScoreTable() {
+  const searchVal = document.getElementById('score-filter-input').value.toLowerCase().trim();
+  const levelVal = document.getElementById('score-filter-level').value;
+  
+  const filtered = cachedScores.filter(s => {
+    const matchesSearch = s.student_name.toLowerCase().includes(searchVal) || 
+                          s.class_name.toLowerCase().includes(searchVal);
+    const matchesLevel = levelVal === 'all' || s.level === levelVal;
+    return matchesSearch && matchesLevel;
+  });
+  
   const tbody = document.getElementById('score-table-body');
   tbody.innerHTML = '';
   
-  scores.forEach((s, idx) => {
-    // Format tanggal lokalisasi Indonesia
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--muted); padding: 24px;">Tidak ada riwayat skor yang cocok.</td></tr>';
+    return;
+  }
+  
+  filtered.forEach((s, idx) => {
     const date = new Date(s.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
     const levelName = s.level.toUpperCase();
     
@@ -630,7 +662,7 @@ async function renderScoreList() {
       <td><span style="font-weight: 800; color: var(--muted);">${escapeHtml(s.class_name)}</span></td>
       <td><span class="detect-bar-label neutral" style="font-size: 11px; font-weight:800; text-transform: uppercase;">${levelName}</span></td>
       <td><span style="font-weight: 800; color: var(--purple);">${s.score}</span></td>
-      <td><span style="font-weight: 800; color: ${s.accuracy >= 80 ? 'var(--green)' : s.accuracy >= 50 ? 'var(--yellow-d)' : 'var(--red)'}">${s.accuracy}%</span></td>
+      <td><span style="font-weight: 800; color: ${s.accuracy >= 80 ? 'var(--green)' : s.accuracy >= 50 ? 'var(--yellow-d)' : 'var(--red-d)'}">${s.accuracy}%</span></td>
       <td>${escapeHtml(s.time_spent)}</td>
     `;
     tbody.appendChild(tr);
@@ -748,6 +780,95 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+// Ekspor Riwayat Skor ke CSV (Excel)
+async function exportScoresToCSV() {
+  const scores = await getStudentScores();
+  if (scores.length === 0) {
+    alert("Tidak ada data skor yang bisa diekspor.");
+    return;
+  }
+  
+  // Gunakan BOM (\uFEFF) agar Excel membaca karakter UTF-8 dengan benar
+  let csvContent = "\uFEFF"; 
+  csvContent += "No,Tanggal,Nama Siswa,Kelas,Tingkat Kuis,Skor,Akurasi,Waktu Pengerjaan\n";
+  
+  scores.forEach((s, idx) => {
+    const date = new Date(s.created_at).toLocaleString('id-ID').replace(/,/g, '');
+    const row = [
+      idx + 1,
+      `"${date}"`,
+      `"${s.student_name.replace(/"/g, '""')}"`,
+      `"${s.class_name.replace(/"/g, '""')}"`,
+      `"${s.level.toUpperCase()}"`,
+      s.score,
+      `"${s.accuracy}%"`,
+      `"${s.time_spent}"`
+    ].join(",");
+    csvContent += row + "\n";
+  });
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Rekap_Nilai_HandStrike_${new Date().toISOString().slice(0,10)}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Web Audio API Synthesizer untuk SFX Game (Ding, Buzz, Win)
+function playSound(type) {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    
+    const audioCtx = new AudioContextClass();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    const now = audioCtx.currentTime;
+    
+    if (type === 'correct') {
+      // Suara double-ding ceria untuk jawaban benar
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'wrong') {
+      // Suara dengung rendah (buzz) untuk jawaban salah
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.setValueAtTime(110, now + 0.1);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } else if (type === 'win') {
+      // Suara arpeggio melodi kemenangan
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      osc.type = 'triangle';
+      gain.gain.setValueAtTime(0.2, now);
+      notes.forEach((freq, idx) => {
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+      });
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    }
+  } catch (e) {
+    console.warn("Web Audio API blocked or not supported:", e);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

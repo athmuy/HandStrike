@@ -224,7 +224,25 @@
 
       <!-- KONTEN TAB: RIWAYAT SKOR -->
       <div id="tab-content-scores" class="tab-content">
-        <div class="question-list-container" style="max-height: 400px;">
+        <!-- Filter Pencarian Kelas & Nama -->
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 4px;">🔍 Cari Nama / Kelas</label>
+            <input type="text" id="score-filter-input" class="styled-input" style="padding: 8px 12px; border-radius: 8px;" placeholder="Ketik nama siswa atau kelas..." oninput="filterScoreTable()" />
+          </div>
+          <div style="width: 160px; display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 11px; font-weight: 800; color: var(--text);">Tingkat Soal</label>
+            <select id="score-filter-level" class="styled-select" style="padding: 8px 12px; border-radius: 8px; background-position: right 12px center;" onchange="filterScoreTable()">
+              <option value="all">Semua Tingkat</option>
+              <option value="sd">SD</option>
+              <option value="smp">SMP</option>
+              <option value="sma">SMA</option>
+              <option value="mahasiswa">Mahasiswa</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="question-list-container" style="max-height: 300px;">
           <table class="question-table">
             <thead>
               <tr>
@@ -250,6 +268,7 @@
         <button class="btn-danger-sm" onclick="resetQuestionsToDefault()">Reset ke Default</button>
       </div>
       <div id="footer-actions-scores" style="display: none;">
+        <button class="btn-primary-sm" style="background: var(--green); border-color: var(--green-d); margin-right: 8px;" onclick="exportScoresToCSV()"><img class="apple-emoji" src="https://emojicdn.elk.sh/📥" alt="📥"> Ekspor ke Excel (CSV)</button>
         <button class="btn-danger-sm" onclick="clearAllScoresHistory()"><img class="apple-emoji" src="https://emojicdn.elk.sh/🗑️" alt="🗑️"> Hapus Semua Riwayat</button>
       </div>
       <button class="btn-secondary" style="font-size: 14px; padding: 10px 24px;" onclick="closeQuestionManager()">Tutup</button>
