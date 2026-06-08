@@ -191,11 +191,13 @@ async function startPredictionLoop() {
         if (pose && pose.score > POSE_CONF_THRESHOLD) {
           const predictions = await model.predict(posenetOutput);
 
-          // Overlay skeleton
+          // Overlay skeleton - Di-disable agar feed kamera terlihat bersih & natural (tidak terlalu robotic/AI)
+          /*
           try {
             window.tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
             window.tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
           } catch(e) {}
+          */
 
           // Parse prediksi gestur
           leftConf = 0;
@@ -219,6 +221,10 @@ async function startPredictionLoop() {
         document.getElementById('hold-bar').style.width      = '0%';
         document.getElementById('choice-left').classList.remove('active');
         document.getElementById('choice-right').classList.remove('active');
+        const camWrap = document.querySelector('.cam-view-wrap');
+        if (camWrap) {
+          camWrap.className = 'cam-view-wrap';
+        }
       }
 
       predictionLoop = requestAnimationFrame(loop);
@@ -252,12 +258,16 @@ function processGesture(leftConf, rightConf) {
 
   const gestureEl = document.getElementById('gesture-value');
   const holdBar   = document.getElementById('hold-bar');
+  const camWrap   = document.querySelector('.cam-view-wrap');
 
   if (detected) {
     gestureEl.textContent = detected === 'left' ? '← Kiri' : 'Kanan →';
     gestureEl.className   = 'gesture-value ' + detected;
     document.getElementById('choice-left').classList.toggle('active',  detected === 'left');
     document.getElementById('choice-right').classList.toggle('active', detected === 'right');
+    if (camWrap) {
+      camWrap.className = 'cam-view-wrap active-' + detected;
+    }
 
     if (detected !== currentGesture) {
       currentGesture = detected;
@@ -278,6 +288,9 @@ function processGesture(leftConf, rightConf) {
     holdBar.style.width = '0%';
     document.getElementById('choice-left').classList.remove('active');
     document.getElementById('choice-right').classList.remove('active');
+    if (camWrap) {
+      camWrap.className = 'cam-view-wrap';
+    }
   }
 }
 

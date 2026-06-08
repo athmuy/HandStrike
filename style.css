@@ -7,24 +7,24 @@
 
 :root {
   --white:    #ffffff;
-  --bg:       #f4f6ff;
-  --red:      #FF4757;
-  --green:    #2ED573;
-  --yellow:   #e6b800;
-  --blue:     #1E90FF;
-  --orange:   #FF6B35;
-  --purple:   #9B59B6;
+  --bg:       #FAF9F6; /* Ivory/Alabaster hangat */
+  --red:      #E76F51; /* Coral/terracotta hangat */
+  --green:    #2A9D8F; /* Mint/emerald hijau alami */
+  --yellow:   #E9C46A; /* Kuning pasir lembut */
+  --blue:     #4EA8DE; /* Sky blue lembut */
+  --orange:   #F4A261; /* Peach orange lembut */
+  --purple:   #8338EC; /* Lilac/purple royal lembut */
   --pink:     #FF6B9D;
   --teal:     #00D2D3;
-  --red-d:    #c0392b;
-  --green-d:  #1aad57;
-  --yellow-d: #b8900a;
-  --blue-d:   #1565c0;
-  --orange-d: #d4501e;
-  --purple-d: #7d3c98;
-  --text:     #1a1a2e;
-  --muted:    #6b7280;
-  --border:   #e5e7eb;
+  --red-d:    #c55a3f;
+  --green-d:  #20786d;
+  --yellow-d: #c09d4f;
+  --blue-d:   #3a8bb0;
+  --orange-d: #d08447;
+  --purple-d: #6b23c7;
+  --text:     #2B2D42; /* Charcoal lembut (tidak kaku hitam) */
+  --muted:    #8D99AE; /* Slate gray lembut */
+  --border:   #EDF2F4; /* Border abu-abu sangat muda & halus */
   --font-head: 'Fredoka One', cursive;
   --font-body: 'Nunito', sans-serif;
 }
@@ -40,9 +40,9 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(circle, #c7d2fe 1.5px, transparent 1.5px);
+  background-image: radial-gradient(circle, #E3E8F0 1.5px, transparent 1.5px);
   background-size: 28px 28px;
-  opacity: 0.5;
+  opacity: 0.6;
   pointer-events: none;
   z-index: 0;
 }
@@ -101,14 +101,15 @@ body::before {
 .step-card {
   background: var(--white);
   border: 2.5px solid var(--border);
-  border-bottom: 5px solid #d1d5db;
-  border-radius: 20px;
+  border-bottom: 5px solid #e2e8f0;
+  border-radius: 24px;
   padding: 22px 16px;
   width: 148px;
   text-align: center;
-  transition: transform 0.15s;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.step-card:hover { transform: translateY(-4px); }
+.step-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.05); }
 .step-num {
   width: 28px;
   height: 28px;
@@ -237,14 +238,24 @@ body::before {
 .cam-header { font-family: var(--font-head); font-size: 17px; color: var(--purple); display: flex; align-items: center; gap: 6px; }
 .cam-view-wrap {
   position: relative;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  background: #1a1a2e;
+  background: #FAF9F6;
   aspect-ratio: 4/3;
-  border: 3px solid var(--border);
+  border: 3.5px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.cam-view-wrap.active-left {
+  border-color: var(--blue);
+  box-shadow: 0 0 24px rgba(78, 168, 222, 0.45);
+}
+.cam-view-wrap.active-right {
+  border-color: var(--red);
+  box-shadow: 0 0 24px rgba(231, 111, 81, 0.45);
 }
 #webcam-canvas {
   width: 100%;
@@ -337,23 +348,23 @@ body::before {
 .choices-row { display: flex; gap: 18px; width: 100%; max-width: 700px; }
 .choice-card {
   flex: 1;
-  border-radius: 22px;
+  border-radius: 24px;
   padding: 26px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   cursor: default;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.2s ease;
   min-height: 155px;
   justify-content: center;
   border: none;
 }
 .choice-card.left  { background: var(--blue); box-shadow: 0 6px 0 var(--blue-d); }
 .choice-card.right { background: var(--red);  box-shadow: 0 6px 0 var(--red-d); }
-.choice-card.active { transform: translateY(-5px) scale(1.025); }
-.choice-card.active.left  { box-shadow: 0 10px 0 var(--blue-d), 0 0 32px rgba(30,144,255,0.3); }
-.choice-card.active.right { box-shadow: 0 10px 0 var(--red-d),  0 0 32px rgba(255,71,87,0.3); }
+.choice-card.active { transform: translateY(-6px) scale(1.03); }
+.choice-card.active.left  { box-shadow: 0 10px 0 var(--blue-d), 0 12px 32px rgba(78,168,222,0.35); }
+.choice-card.active.right { box-shadow: 0 10px 0 var(--red-d),  0 12px 32px rgba(231,111,81,0.35); }
 .choice-card.correct {
   background: var(--green) !important;
   box-shadow: 0 6px 0 var(--green-d) !important;
