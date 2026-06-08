@@ -15,11 +15,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Konfigurasi Database
-$db_host = 'localhost';
-$db_name = 'handstrike';
-$db_user = 'root';
-$db_pass = ''; // default XAMPP/Laragon kosong
+// Konfigurasi Database (Deteksi Otomatis Lokal / Online)
+if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['HTTP_HOST'] === '127.0.0.1' || stripos($_SERVER['HTTP_HOST'], 'localhost:') === 0) {
+    $db_host = 'localhost';
+    $db_name = 'handstrike';
+    $db_user = 'root';
+    $db_pass = ''; // default XAMPP kosong
+} else {
+    $db_host = 'sql202.infinityfree.com';
+    $db_name = 'if0_42129414_handstrike';
+    $db_user = 'if0_42129414';
+    $db_pass = 'PASSWORD_DATABASE_ANDA'; // Ganti dengan Password Akun / MySQL dari dashboard InfinityFree
+}
 
 try {
     $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass, [

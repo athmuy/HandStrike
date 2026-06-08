@@ -3,9 +3,9 @@
 -- Skema database MySQL untuk HandStrike
 -- ═══════════════════════════════════════
 
--- Buat database jika belum ada
-CREATE DATABASE IF NOT EXISTS `handstrike` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `handstrike`;
+-- Buat database jika belum ada (Di-disable untuk kesesuaian shared hosting online)
+-- CREATE DATABASE IF NOT EXISTS `handstrike` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+-- USE `handstrike`;
 
 -- --------------------------------------------------------
 
