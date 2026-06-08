@@ -1,9 +1,9 @@
-/* ═══════════════════════════════════════
-   app.js - FIXED: draw from webcam.video
-═══════════════════════════════════════ */
+const HOLD_DURATION = 1500; 
+// ini buat ngatur berapa lama gesture harus ditahan biar kebaca jawabannya
 
-const HOLD_DURATION = 1500;
-const CONFIDENCE_THRESHOLD = 0.75;
+const CONFIDENCE_THRESHOLD = 0.75; 
+// ini batas minimal keyakinan ai buat nentuin gesture nya valid apa nggak
+
 const DEFAULT_MODEL_URL = "https://teachablemachine.withgoogle.com/models/rsT6VZXS5/";
 const TEACHER_PIN = "1234"; // Ganti PIN Guru di sini jika ingin mengubah password/PIN
 
@@ -21,6 +21,12 @@ let isCooldown = false;
 let cooldownTimer = null;
 let predictionLoop = null;
 let classLabels = { left: 'kiri', right: 'kanan', neutral: 'netral' };
+// label gesture dari teachable machine
+
+
+// ==========================
+// pindah tampilan screen
+// ==========================
 
 // Data sesi aktif siswa
 let studentName = "Siswa Baru";
@@ -29,7 +35,11 @@ let activeLevel = "smp";
 
 // Screen navigation
 function showScreen(id) {
+
+  // hapus active dari semua screen
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+  // tampilin screen yang dipilih
   document.getElementById('screen-' + id).classList.add('active');
   
   // Jika kembali ke beranda (intro), matikan kamera secara total
@@ -51,7 +61,11 @@ function stopCameraStream() {
 // Keyboard fallback
 async function skipToGame() {
   isCameraMode = false;
+  // matiin mode kamera
+
   document.querySelector('.cam-panel').style.opacity = '0.5';
+  // bikin panel kamera agak redup
+
   document.querySelector('.cam-panel').style.pointerEvents = 'none';
   
   // Ambil nama dan kelas siswa
@@ -69,13 +83,27 @@ async function skipToGame() {
   showScreen('game');
   loadQuestionWithCooldown(0);
   gameStartTime = Date.now();
+  // mulai hitung waktu game
+
   document.addEventListener('keydown', keyboardFallback);
+  // aktifin kontrol keyboard
 }
 
+
+// ==========================
+// kontrol keyboard
+// ==========================
+
 function keyboardFallback(e) {
+
   if (isAnswering) return;
+  // kalau lagi jawab jangan baca tombol dulu
+
   if (e.key === 'ArrowLeft') submitAnswer('left');
+  // tombol kiri buat pilih jawaban kiri
+
   if (e.key === 'ArrowRight') submitAnswer('right');
+  // tombol kanan buat pilih jawaban kanan
 }
 
 // Load model & camera
@@ -126,27 +154,43 @@ async function startCountdown() {
 
 // Load model & camera - FIXED: pakai getUserMedia native
 async function loadModel() {
+
+  // ngecek library tm nya kebaca atau nggak
   if (typeof window.tmPose === 'undefined') {
-    setStatus('error', '❌ Library belum termuat. Refresh halaman (Ctrl+F5).');
+    setStatus('error', '❌ library belum kebaca, coba refresh');
     return;
   }
 
+  // ambil url model dari input
   let urlInput = document.getElementById('model-url-input').value.trim();
+
+  // kalau kosong pake default
   if (!urlInput) {
     urlInput = DEFAULT_MODEL_URL;
     document.getElementById('model-url-input').value = DEFAULT_MODEL_URL;
   }
 
+  // ambil nama label gesture
   classLabels.left    = document.getElementById('label-left').value    || 'kiri';
   classLabels.right   = document.getElementById('label-right').value   || 'kanan';
   classLabels.neutral = document.getElementById('label-neutral').value || 'netral';
 
+  // benerin format url
   const modelURL = urlInput.endsWith('/') ? urlInput : urlInput + '/';
-  setStatus('loading', '<span class="spinner"></span> Memuat model...');
+
+  // kasih status loading
+  setStatus('loading', 'lagi load model ai...');
 
   try {
-    model = await window.tmPose.load(modelURL + 'model.json', modelURL + 'metadata.json');
-    setStatus('loading', '<span class="spinner"></span> Membuka kamera...');
+
+    // ini buat nyambungin ke model teachable machine
+    model = await window.tmPose.load(
+      modelURL + 'model.json',
+      modelURL + 'metadata.json'
+    );
+
+    // kasih status buka kamera
+    setStatus('loading', 'lagi buka kamera...');
 
     // Gunakan getUserMedia native — jauh lebih stabil
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
@@ -167,10 +211,17 @@ async function loadModel() {
     canvas.width  = 300;
     canvas.height = 300;
 
-    setStatus('success', '✅ Model & kamera siap! 3 detik lagi...');
+    // status kalau semua udah siap
+    setStatus('success', 'model sama kamera udah siap');
+
+    // mulai countdown
     setTimeout(() => startCountdown(), 800);
+
   } catch (err) {
-    setStatus('error', '❌ Gagal: ' + err.message);
+
+    // kalau error tampilin pesan
+    setStatus('error', 'gagal load: ' + err.message);
+
     console.error(err);
   }
 }
