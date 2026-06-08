@@ -165,7 +165,7 @@ async function startPredictionLoop() {
         const { pose, posenetOutput } = await model.estimatePose(canvas);
         
         let leftConf = 0, rightConf = 0, neutralConf = 1.0;
-        const POSE_CONF_THRESHOLD = 0.50; // Ambang batas deteksi manusia
+        const POSE_CONF_THRESHOLD = 0.15; // Ambang batas deteksi manusia (diatur ke 0.15 agar cocok untuk webcam setengah badan)
 
         // Hanya deteksi gestur jika ada orang yang terdeteksi secara jelas
         if (pose && pose.score > POSE_CONF_THRESHOLD) {
