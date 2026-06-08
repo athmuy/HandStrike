@@ -21,6 +21,10 @@ let cooldownTimer = null;
 let predictionLoop = null;
 let classLabels = { left: 'kiri', right: 'kanan', neutral: 'netral' };
 
+// Data sesi aktif siswa
+let studentName = "Siswa Baru";
+let activeLevel = "smp";
+
 // Screen navigation
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -33,9 +37,14 @@ async function skipToGame() {
   document.querySelector('.cam-panel').style.opacity = '0.5';
   document.querySelector('.cam-panel').style.pointerEvents = 'none';
   
+  // Ambil nama siswa
+  const nameInput = document.getElementById('student-name');
+  studentName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Siswa Baru";
+  
   // Load selected level quiz data
   const levelSelect = document.getElementById('level-select');
   const selectedLevel = levelSelect ? levelSelect.value : 'smp';
+  activeLevel = selectedLevel;
   QUIZ_DATA = await getQuizDataForLevel(selectedLevel);
   
   showScreen('game');
@@ -64,9 +73,14 @@ async function startCountdown() {
   const numEl   = document.getElementById('countdown-num');
   overlay.style.display = 'flex';
   
+  // Ambil nama siswa
+  const nameInput = document.getElementById('student-name');
+  studentName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Siswa Baru";
+  
   // Load selected level quiz data
   const levelSelect = document.getElementById('level-select');
   const selectedLevel = levelSelect ? levelSelect.value : 'smp';
+  activeLevel = selectedLevel;
   QUIZ_DATA = await getQuizDataForLevel(selectedLevel);
   
   let count = 3;
@@ -351,7 +365,7 @@ function loadQuestionWithCooldown(index) {
   }, 100);
 }
 
-function endGame() {
+async function endGame() {
   stopPredictionLoop();
   if (cooldownTimer) { clearInterval(cooldownTimer); cooldownTimer = null; }
   isCooldown = false;
@@ -366,6 +380,10 @@ function endGame() {
   const pct     = Math.round((correctCount / total) * 100);
   const elapsed = Math.round((Date.now() - gameStartTime) / 1000);
   const timeStr = `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
+
+  // Simpan skor siswa ke database secara asinkron
+  await saveStudentScore(studentName, activeLevel, score, pct, timeStr);
+
   document.getElementById('result-trophy').textContent = pct >= 80 ? '🏆' : pct >= 50 ? '🥈' : '🥉';
   document.getElementById('result-pct').textContent    = pct + '%';
   document.getElementById('result-label').textContent  = `Benar ${correctCount} dari ${total}`;
@@ -384,6 +402,7 @@ async function restartGame() {
   // Re-load selected level quiz data
   const levelSelect = document.getElementById('level-select');
   const selectedLevel = levelSelect ? levelSelect.value : 'smp';
+  activeLevel = selectedLevel;
   QUIZ_DATA = await getQuizDataForLevel(selectedLevel);
   
   document.getElementById('score-display').textContent = '0';
@@ -414,7 +433,7 @@ function openQuestionManager() {
     managerSelect.value = mainSelect.value;
   }
   document.getElementById('modal-question-manager').classList.add('active');
-  renderQuestionList();
+  switchModalTab('questions'); // Set default active tab
 }
 
 function closeQuestionManager() {
@@ -424,6 +443,28 @@ function closeQuestionManager() {
   const mainSelect = document.getElementById('level-select');
   if (managerSelect && mainSelect) {
     mainSelect.value = managerSelect.value;
+  }
+}
+
+function switchModalTab(tabName) {
+  // Reset active tabs & contents
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  
+  // Hide footer action buttons
+  document.getElementById('footer-actions-questions').style.display = 'none';
+  document.getElementById('footer-actions-scores').style.display = 'none';
+  
+  if (tabName === 'questions') {
+    document.getElementById('btn-tab-questions').classList.add('active');
+    document.getElementById('tab-content-questions').classList.add('active');
+    document.getElementById('footer-actions-questions').style.display = 'block';
+    renderQuestionList();
+  } else if (tabName === 'scores') {
+    document.getElementById('btn-tab-scores').classList.add('active');
+    document.getElementById('tab-content-scores').classList.add('active');
+    document.getElementById('footer-actions-scores').style.display = 'block';
+    renderScoreList();
   }
 }
 
@@ -452,6 +493,41 @@ async function renderQuestionList() {
   });
   
   cancelEdit();
+}
+
+async function renderScoreList() {
+  const scores = await getStudentScores();
+  const tbody = document.getElementById('score-table-body');
+  tbody.innerHTML = '';
+  
+  scores.forEach((s, idx) => {
+    // Format tanggal lokalisasi Indonesia
+    const date = new Date(s.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+    const levelName = s.level.toUpperCase();
+    
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td>${date}</td>
+      <td><strong>${escapeHtml(s.student_name)}</strong></td>
+      <td><span class="detect-bar-label neutral" style="font-size: 11px; font-weight:800; text-transform: uppercase;">${levelName}</span></td>
+      <td><span style="font-weight: 800; color: var(--purple);">${s.score}</span></td>
+      <td><span style="font-weight: 800; color: ${s.accuracy >= 80 ? 'var(--green)' : s.accuracy >= 50 ? 'var(--yellow-d)' : 'var(--red)'}">${s.accuracy}%</span></td>
+      <td>${escapeHtml(s.time_spent)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function clearAllScoresHistory() {
+  if (!confirm("Apakah Anda yakin ingin menghapus seluruh riwayat skor siswa dari database?")) return;
+  
+  const res = await clearStudentScores();
+  if (res.status === 'success') {
+    await renderScoreList();
+  } else {
+    alert("Gagal menghapus riwayat skor: " + res.message);
+  }
 }
 
 function editQuestion(index) {

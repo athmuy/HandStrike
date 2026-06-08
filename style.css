@@ -697,6 +697,39 @@ body::before {
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1) !important;
 }
 
+/* MODAL TABS */
+.modal-tabs {
+  display: flex;
+  gap: 12px;
+}
+.modal-tab {
+  background: none;
+  border: none;
+  font-family: var(--font-head);
+  font-size: 16px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 8px 16px;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  outline: none;
+}
+.modal-tab:hover {
+  color: var(--purple);
+}
+.modal-tab.active {
+  color: var(--purple);
+  border-bottom-color: var(--purple);
+}
+
+/* TAB CONTENT */
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+
 @media (max-width: 768px) {
   #screen-game  { flex-direction: column; height: auto; min-height: 100vh; }
   .cam-panel    { width: 100%; border-right: none; border-bottom: 2.5px solid var(--border); }

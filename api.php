@@ -243,6 +243,92 @@ switch ($action) {
         }
         break;
 
+    case 'save_score':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['status' => 'error', 'message' => 'Method Not Allowed']);
+            break;
+        }
+
+        $student_name = isset($input['student_name']) ? trim($input['student_name']) : '';
+        $level = isset($input['level']) ? $input['level'] : '';
+        $score = isset($input['score']) ? (int)$input['score'] : 0;
+        $accuracy = isset($input['accuracy']) ? (int)$input['accuracy'] : 0;
+        $time_spent = isset($input['time_spent']) ? $input['time_spent'] : '';
+
+        if (empty($student_name) || empty($level) || empty($time_spent)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Nama siswa dan data skor tidak lengkap!']);
+            break;
+        }
+
+        try {
+            $stmt = $pdo->prepare("INSERT INTO scores (student_name, level, score, accuracy, time_spent) VALUES (:name, :level, :score, :accuracy, :time)");
+            $stmt->execute([
+                'name' => $student_name,
+                'level' => $level,
+                'score' => $score,
+                'accuracy' => $accuracy,
+                'time' => $time_spent
+            ]);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Skor berhasil disimpan!'
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+        break;
+
+    case 'get_scores':
+        try {
+            $stmt = $pdo->query("SELECT * FROM scores ORDER BY id DESC");
+            $rows = $stmt->fetchAll();
+            
+            $scores = [];
+            foreach ($rows as $row) {
+                $scores[] = [
+                    'id' => (int)$row['id'],
+                    'student_name' => $row['student_name'],
+                    'level' => $row['level'],
+                    'score' => (int)$row['score'],
+                    'accuracy' => (int)$row['accuracy'],
+                    'time_spent' => $row['time_spent'],
+                    'created_at' => $row['created_at']
+                ];
+            }
+            
+            echo json_encode([
+                'status' => 'success',
+                'data' => $scores
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+        break;
+
+    case 'clear_scores':
+        if ($method !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['status' => 'error', 'message' => 'Method Not Allowed']);
+            break;
+        }
+
+        try {
+            $pdo->exec("TRUNCATE TABLE scores");
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Semua riwayat skor berhasil dihapus!'
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        }
+        break;
+
     default:
         http_response_code(404);
         echo json_encode([

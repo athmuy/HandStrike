@@ -55,3 +55,29 @@ INSERT INTO `questions` (`level`, `question`, `left_option`, `right_option`, `co
 ('mahasiswa', 'Protokol transfer data aman yang digunakan secara luas di web adalah...', 'HTTP', 'HTTPS', 'right'),
 ('mahasiswa', 'Algoritma pencarian yang membagi data terurut menjadi dua bagian adalah...', 'Binary Search', 'Bubble Sort', 'left'),
 ('mahasiswa', 'Konsep OOP yang memungkinkan kelas mewarisi sifat kelas lain disebut...', 'Polimorfisme', 'Inheritance', 'right');
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `scores`
+--
+
+DROP TABLE IF EXISTS `scores`;
+CREATE TABLE `scores` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `student_name` VARCHAR(100) NOT NULL,
+  `level` VARCHAR(20) NOT NULL,
+  `score` INT NOT NULL,
+  `accuracy` INT NOT NULL,
+  `time_spent` VARCHAR(20) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data untuk tabel `scores`
+--
+
+INSERT INTO `scores` (`student_name`, `level`, `score`, `accuracy`, `time_spent`) VALUES
+('Budi Santoso', 'smp', 40, 80, '0m 45s'),
+('Siti Aminah', 'sd', 50, 100, '0m 38s'),
+('Ahmad Fauzi', 'mahasiswa', 30, 60, '1m 12s');

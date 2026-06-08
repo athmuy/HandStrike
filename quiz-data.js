@@ -87,3 +87,69 @@ async function resetQuizDataForLevel(level) {
     return { status: "error", message: err.message };
   }
 }
+
+// ═══════════════════════════════════════
+// FUNGSI OPERASI SKOR SISWA
+// ═══════════════════════════════════════
+
+// Menyimpan skor siswa ke MySQL via api.php
+async function saveStudentScore(name, level, score, accuracy, timeSpent) {
+  try {
+    const res = await fetch(`${API_URL}?action=save_score`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        student_name: name,
+        level: level,
+        score: score,
+        accuracy: accuracy,
+        time_spent: timeSpent
+      })
+    });
+    
+    if (!res.ok) throw new Error("Gagal menyimpan skor ke server");
+    return await res.json();
+  } catch (err) {
+    console.error("Gagal menyimpan skor ke MySQL:", err);
+    return { status: "error", message: err.message };
+  }
+}
+
+// Mengambil semua riwayat skor dari MySQL via api.php
+async function getStudentScores() {
+  try {
+    const res = await fetch(`${API_URL}?action=get_scores`);
+    if (!res.ok) throw new Error("Gagal mengambil skor dari server");
+    
+    const json = await res.json();
+    if (json.status === 'success') {
+      return json.data;
+    } else {
+      console.error("API error:", json.message);
+      return [];
+    }
+  } catch (err) {
+    console.error("Gagal memuat riwayat skor dari MySQL:", err);
+    return [];
+  }
+}
+
+// Menghapus semua riwayat skor dari MySQL via api.php
+async function clearStudentScores() {
+  try {
+    const res = await fetch(`${API_URL}?action=clear_scores`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    
+    if (!res.ok) throw new Error("Gagal menghapus riwayat skor di server");
+    return await res.json();
+  } catch (err) {
+    console.error("Gagal menghapus riwayat skor dari MySQL:", err);
+    return { status: "error", message: err.message };
+  }
+}

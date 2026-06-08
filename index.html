@@ -29,8 +29,12 @@
     <div class="step-card"><div class="step-num">3</div><span class="step-icon">✋</span><div class="step-label">Angkat tangan kiri / kanan</div></div>
     <div class="step-card"><div class="step-num">4</div><span class="step-icon">🎯</span><div class="step-label">Tahan untuk menjawab</div></div>
   </div>
+  <div class="student-name-wrap" style="margin-bottom: 24px; max-width: 320px; width: 100%; display: flex; flex-direction: column; align-items: center; margin-left: auto; margin-right: auto;">
+    <label style="font-family: var(--font-body); font-weight: 800; font-size: 15px; color: var(--purple); display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">👤 Nama Siswa / Pengguna</label>
+    <input type="text" id="student-name" class="styled-input" style="text-align: center; font-size: 16px; padding: 12px; border-radius: 14px;" placeholder="Ketik namamu di sini..." value="Siswa Baru" />
+  </div>
   <button class="btn-primary" onclick="showScreen('setup')">🚀 Mulai Sekarang!</button><br>
-  <button class="btn-secondary" onclick="skipToGame()">⌨️ Lewati (pakai keyboard)</button>
+  <button class="btn-secondary" style="margin-top: 10px;" onclick="skipToGame()">⌨️ Lewati (pakai keyboard)</button>
 </div>
 
 <!-- SCREEN: SETUP -->
@@ -115,70 +119,103 @@
 <div class="modal-overlay" id="modal-question-manager">
   <div class="modal-card">
     <div class="modal-header">
-      <h3 class="modal-title">📝 Kelola Bank Soal</h3>
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="btn-tab-questions" onclick="switchModalTab('questions')">📝 Kelola Soal</button>
+        <button class="modal-tab" id="btn-tab-scores" onclick="switchModalTab('scores')">🏆 Riwayat Skor Siswa</button>
+      </div>
       <button class="btn-close-modal" onclick="closeQuestionManager()">×</button>
     </div>
     <div class="modal-body">
-      <div class="url-input-wrap">
-        <label>Pilih Tingkat Pendidikan</label>
-        <select id="manager-level-select" class="styled-select" onchange="renderQuestionList()">
-          <option value="sd">Sekolah Dasar (SD)</option>
-          <option value="smp">Sekolah Menengah Pertama (SMP)</option>
-          <option value="sma">Sekolah Menengah Atas (SMA)</option>
-          <option value="mahasiswa">Perguruan Tinggi (Mahasiswa)</option>
-        </select>
-      </div>
-      
-      <div class="question-list-container">
-        <table class="question-table">
-          <thead>
-            <tr>
-              <th style="width: 5%">No</th>
-              <th style="width: 45%">Pertanyaan</th>
-              <th style="width: 15%">Kiri</th>
-              <th style="width: 15%">Kanan</th>
-              <th style="width: 10%">Kunci</th>
-              <th style="width: 10%">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="question-table-body">
-            <!-- Diisi oleh JS -->
-          </tbody>
-        </table>
+      <!-- KONTEN TAB: KELOLA SOAL -->
+      <div id="tab-content-questions" class="tab-content active">
+        <div class="url-input-wrap">
+          <label>Pilih Tingkat Pendidikan</label>
+          <select id="manager-level-select" class="styled-select" onchange="renderQuestionList()">
+            <option value="sd">Sekolah Dasar (SD)</option>
+            <option value="smp">Sekolah Menengah Pertama (SMP)</option>
+            <option value="sma">Sekolah Menengah Atas (SMA)</option>
+            <option value="mahasiswa">Perguruan Tinggi (Mahasiswa)</option>
+          </select>
+        </div>
+        
+        <div class="question-list-container" style="margin-top: 10px;">
+          <table class="question-table">
+            <thead>
+              <tr>
+                <th style="width: 5%">No</th>
+                <th style="width: 45%">Pertanyaan</th>
+                <th style="width: 15%">Kiri</th>
+                <th style="width: 15%">Kanan</th>
+                <th style="width: 10%">Kunci</th>
+                <th style="width: 10%">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="question-table-body">
+              <!-- Diisi oleh JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="question-form-container" style="margin-top: 20px;">
+          <h4 id="form-title" class="form-title">➕ Tambah Pertanyaan Baru</h4>
+          <input type="hidden" id="edit-question-index" value="-1" />
+          <div class="form-group">
+            <label>Teks Pertanyaan</label>
+            <input type="text" id="input-q-text" class="styled-input" placeholder="Masukkan teks pertanyaan..." />
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Pilihan Kiri (←)</label>
+              <input type="text" id="input-q-left" class="styled-input" placeholder="Pilihan kiri..." />
+            </div>
+            <div class="form-group">
+              <label>Pilihan Kanan (→)</label>
+              <input type="text" id="input-q-right" class="styled-input" placeholder="Pilihan kanan..." />
+            </div>
+            <div class="form-group">
+              <label>Kunci Jawaban</label>
+              <select id="input-q-correct" class="styled-select">
+                <option value="left">Kiri</option>
+                <option value="right">Kanan</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary-sm" onclick="saveQuestion()">Simpan Pertanyaan</button>
+            <button class="btn-secondary-sm" id="btn-cancel-edit" style="display:none;" onclick="cancelEdit()">Batal</button>
+          </div>
+        </div>
       </div>
 
-      <div class="question-form-container">
-        <h4 id="form-title" class="form-title">Tambah Pertanyaan Baru</h4>
-        <input type="hidden" id="edit-question-index" value="-1" />
-        <div class="form-group">
-          <label>Teks Pertanyaan</label>
-          <input type="text" id="input-q-text" class="styled-input" placeholder="Masukkan teks pertanyaan..." />
-        </div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Pilihan Kiri (←)</label>
-            <input type="text" id="input-q-left" class="styled-input" placeholder="Pilihan kiri..." />
-          </div>
-          <div class="form-group">
-            <label>Pilihan Kanan (→)</label>
-            <input type="text" id="input-q-right" class="styled-input" placeholder="Pilihan kanan..." />
-          </div>
-          <div class="form-group">
-            <label>Kunci Jawaban</label>
-            <select id="input-q-correct" class="styled-select">
-              <option value="left">Kiri</option>
-              <option value="right">Kanan</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn-primary-sm" onclick="saveQuestion()">Simpan Pertanyaan</button>
-          <button class="btn-secondary-sm" id="btn-cancel-edit" style="display:none;" onclick="cancelEdit()">Batal</button>
+      <!-- KONTEN TAB: RIWAYAT SKOR -->
+      <div id="tab-content-scores" class="tab-content">
+        <div class="question-list-container" style="max-height: 400px;">
+          <table class="question-table">
+            <thead>
+              <tr>
+                <th style="width: 5%">No</th>
+                <th style="width: 20%">Tanggal</th>
+                <th style="width: 25%">Nama Siswa</th>
+                <th style="width: 15%">Tingkat</th>
+                <th style="width: 10%">Skor</th>
+                <th style="width: 15%">Akurasi</th>
+                <th style="width: 10%">Waktu</th>
+              </tr>
+            </thead>
+            <tbody id="score-table-body">
+              <!-- Diisi oleh JS -->
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-danger-sm" onclick="resetQuestionsToDefault()">Reset ke Default</button>
+      <div id="footer-actions-questions">
+        <button class="btn-danger-sm" onclick="resetQuestionsToDefault()">Reset ke Default</button>
+      </div>
+      <div id="footer-actions-scores" style="display: none;">
+        <button class="btn-danger-sm" onclick="clearAllScoresHistory()">🗑️ Hapus Semua Riwayat</button>
+      </div>
       <button class="btn-secondary" style="font-size: 14px; padding: 10px 24px;" onclick="closeQuestionManager()">Tutup</button>
     </div>
   </div>
