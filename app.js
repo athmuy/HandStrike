@@ -20,6 +20,8 @@ let isAnswering = false;
 let isCooldown = false;
 let cooldownTimer = null;
 let predictionLoop = null;
+let lastPredictionTime = 0;
+const PREDICTION_INTERVAL = 100; // run AI predictions every 100ms (10 FPS) to prevent CPU lag and crashes
 let classLabels = { left: 'kiri', right: 'kanan', neutral: 'netral' };
 // label gesture dari teachable machine
 
@@ -235,18 +237,23 @@ async function startPredictionLoop() {
 
   if (!ctx || !video) return;
 
+  lastPredictionTime = 0; // Reset last prediction time on start
+
   async function loop() {
     if (!isCameraMode || !model) return;
 
     try {
-      // Gambar frame video ke canvas (mirror)
+      // Gambar frame video ke canvas (mirror) - Selalu jalankan di setiap frame agar preview kamera mulus 60 FPS
       ctx.save();
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       ctx.restore();
 
-      if (!isAnswering) {
+      const now = Date.now();
+      if (!isAnswering && (now - lastPredictionTime >= PREDICTION_INTERVAL)) {
+        lastPredictionTime = now;
+
         // Estimasi pose dari canvas
         const { pose, posenetOutput } = await model.estimatePose(canvas);
         
@@ -256,14 +263,6 @@ async function startPredictionLoop() {
         // Hanya deteksi gestur jika ada orang yang terdeteksi secara jelas
         if (pose && pose.score > POSE_CONF_THRESHOLD) {
           const predictions = await model.predict(posenetOutput);
-
-          // Overlay skeleton - Di-disable agar feed kamera terlihat bersih & natural (tidak terlalu robotic/AI)
-          /*
-          try {
-            window.tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
-            window.tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
-          } catch(e) {}
-          */
 
           // Parse prediksi gestur
           leftConf = 0;
@@ -279,7 +278,7 @@ async function startPredictionLoop() {
 
         updateBars(leftConf, rightConf, neutralConf);
         processGesture(leftConf, rightConf);
-      } else {
+      } else if (isAnswering) {
         // Clear state bars/gestures when answering or in cooldown
         updateBars(0, 0, 0);
         document.getElementById('gesture-value').textContent = '—';
