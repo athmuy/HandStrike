@@ -163,24 +163,31 @@ async function startPredictionLoop() {
       if (!isAnswering) {
         // Estimasi pose dari canvas
         const { pose, posenetOutput } = await model.estimatePose(canvas);
-        const predictions = await model.predict(posenetOutput);
+        
+        let leftConf = 0, rightConf = 0, neutralConf = 1.0;
+        const POSE_CONF_THRESHOLD = 0.50; // Ambang batas deteksi manusia
 
-        // Overlay skeleton
-        if (pose) {
+        // Hanya deteksi gestur jika ada orang yang terdeteksi secara jelas
+        if (pose && pose.score > POSE_CONF_THRESHOLD) {
+          const predictions = await model.predict(posenetOutput);
+
+          // Overlay skeleton
           try {
             window.tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
             window.tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
           } catch(e) {}
-        }
 
-        // Parse prediksi
-        let leftConf = 0, rightConf = 0, neutralConf = 0;
-        predictions.forEach(p => {
-          const name = p.className.toLowerCase();
-          if      (name === classLabels.left.toLowerCase())    leftConf    = p.probability;
-          else if (name === classLabels.right.toLowerCase())   rightConf   = p.probability;
-          else    neutralConf = Math.max(neutralConf, p.probability);
-        });
+          // Parse prediksi gestur
+          leftConf = 0;
+          rightConf = 0;
+          neutralConf = 0;
+          predictions.forEach(p => {
+            const name = p.className.toLowerCase();
+            if      (name === classLabels.left.toLowerCase())    leftConf    = p.probability;
+            else if (name === classLabels.right.toLowerCase())   rightConf   = p.probability;
+            else    neutralConf = Math.max(neutralConf, p.probability);
+          });
+        }
 
         updateBars(leftConf, rightConf, neutralConf);
         processGesture(leftConf, rightConf);
