@@ -262,6 +262,14 @@ intro screen
   background: var(--blue);
 }
 
+.step-card:nth-child(3) .step-num {
+  background: var(--green);
+}
+
+.step-card:nth-child(4) .step-num {
+  background: var(--orange);
+}
+
 
 /* icon langkah */
 .step-icon {
