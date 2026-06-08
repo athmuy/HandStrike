@@ -5,6 +5,7 @@
 const HOLD_DURATION = 1500;
 const CONFIDENCE_THRESHOLD = 0.75;
 const DEFAULT_MODEL_URL = "https://teachablemachine.withgoogle.com/models/rsT6VZXS5/";
+const TEACHER_PIN = "1234"; // Ganti PIN Guru di sini jika ingin mengubah password/PIN
 
 let model = null;
 let webcam = null;
@@ -432,8 +433,8 @@ async function restartGame() {
 let currentManagerQuestions = [];
 
 function promptTeacherLogin() {
-  const pin = prompt("Masukkan PIN Guru untuk masuk ke dashboard pengajar (Default: 1234):");
-  if (pin === "1234") {
+  const pin = prompt(`Masukkan PIN Guru untuk masuk ke dashboard pengajar (Default: ${TEACHER_PIN}):`);
+  if (pin === TEACHER_PIN) {
     openQuestionManager();
   } else if (pin !== null) {
     alert("PIN salah! Akses ditolak.");
