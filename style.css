@@ -591,6 +591,28 @@ overlay feedback
 ========================== */
 
 .feedback-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.feedback-overlay.show { opacity: 1; }
+.feedback-bubble {
+  font-family: var(--font-head);
+  font-size: 80px;
+  padding: 16px 52px;
+  border-radius: 28px;
+  animation: feedPop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  border-bottom: 8px solid;
+}
+.feedback-bubble.correct { background: var(--green); color: white; border-color: var(--green-d); }
+.feedback-bubble.wrong   { background: var(--red);   color: white; border-color: var(--red-d); }
+@keyframes feedPop { from { transform: scale(0.4) rotate(-6deg); } to { transform: scale(1) rotate(0deg); } }
 
 /* RESULT */
 #screen-result { align-items: center; justify-content: center; padding: 40px 24px; }
