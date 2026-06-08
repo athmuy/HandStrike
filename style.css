@@ -335,6 +335,22 @@ button utama
 }
 
 
+/* tombol green */
+.btn-green {
+  font-family: var(--font-head);
+  font-size: 18px;
+  padding: 14px 40px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-bottom: 5px solid var(--green-d);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.btn-green:hover  { filter: brightness(1.05); transform: translateY(-2px); }
+.btn-green:active { border-bottom-width: 2px; transform: translateY(2px); }
+
 /* tombol secondary */
 .btn-secondary {
 
