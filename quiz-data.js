@@ -93,7 +93,7 @@ async function resetQuizDataForLevel(level) {
 // ═══════════════════════════════════════
 
 // Menyimpan skor siswa ke MySQL via api.php
-async function saveStudentScore(name, level, score, accuracy, timeSpent) {
+async function saveStudentScore(name, className, level, score, accuracy, timeSpent) {
   try {
     const res = await fetch(`${API_URL}?action=save_score`, {
       method: "POST",
@@ -102,6 +102,7 @@ async function saveStudentScore(name, level, score, accuracy, timeSpent) {
       },
       body: JSON.stringify({
         student_name: name,
+        class_name: className,
         level: level,
         score: score,
         accuracy: accuracy,

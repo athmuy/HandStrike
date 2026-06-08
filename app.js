@@ -23,6 +23,7 @@ let classLabels = { left: 'kiri', right: 'kanan', neutral: 'netral' };
 
 // Data sesi aktif siswa
 let studentName = "Siswa Baru";
+let studentClass = "7-A";
 let activeLevel = "smp";
 
 // Screen navigation
@@ -37,9 +38,11 @@ async function skipToGame() {
   document.querySelector('.cam-panel').style.opacity = '0.5';
   document.querySelector('.cam-panel').style.pointerEvents = 'none';
   
-  // Ambil nama siswa
+  // Ambil nama dan kelas siswa
   const nameInput = document.getElementById('student-name');
+  const classInput = document.getElementById('student-class');
   studentName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Siswa Baru";
+  studentClass = classInput && classInput.value.trim() ? classInput.value.trim() : "7-A";
   
   // Load selected level quiz data
   const levelSelect = document.getElementById('level-select');
@@ -73,9 +76,11 @@ async function startCountdown() {
   const numEl   = document.getElementById('countdown-num');
   overlay.style.display = 'flex';
   
-  // Ambil nama siswa
+  // Ambil nama dan kelas siswa
   const nameInput = document.getElementById('student-name');
+  const classInput = document.getElementById('student-class');
   studentName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Siswa Baru";
+  studentClass = classInput && classInput.value.trim() ? classInput.value.trim() : "7-A";
   
   // Load selected level quiz data
   const levelSelect = document.getElementById('level-select');
@@ -382,7 +387,7 @@ async function endGame() {
   const timeStr = `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`;
 
   // Simpan skor siswa ke database secara asinkron
-  await saveStudentScore(studentName, activeLevel, score, pct, timeStr);
+  await saveStudentScore(studentName, studentClass, activeLevel, score, pct, timeStr);
 
   document.getElementById('result-trophy').textContent = pct >= 80 ? '🏆' : pct >= 50 ? '🥈' : '🥉';
   document.getElementById('result-pct').textContent    = pct + '%';
@@ -425,6 +430,15 @@ async function restartGame() {
    ═══════════════════════════════════════ */
 
 let currentManagerQuestions = [];
+
+function promptTeacherLogin() {
+  const pin = prompt("Masukkan PIN Guru untuk masuk ke dashboard pengajar (Default: 1234):");
+  if (pin === "1234") {
+    openQuestionManager();
+  } else if (pin !== null) {
+    alert("PIN salah! Akses ditolak.");
+  }
+}
 
 function openQuestionManager() {
   const managerSelect = document.getElementById('manager-level-select');
@@ -510,6 +524,7 @@ async function renderScoreList() {
       <td>${idx + 1}</td>
       <td>${date}</td>
       <td><strong>${escapeHtml(s.student_name)}</strong></td>
+      <td><span style="font-weight: 800; color: var(--muted);">${escapeHtml(s.class_name)}</span></td>
       <td><span class="detect-bar-label neutral" style="font-size: 11px; font-weight:800; text-transform: uppercase;">${levelName}</span></td>
       <td><span style="font-weight: 800; color: var(--purple);">${s.score}</span></td>
       <td><span style="font-weight: 800; color: ${s.accuracy >= 80 ? 'var(--green)' : s.accuracy >= 50 ? 'var(--yellow-d)' : 'var(--red)'}">${s.accuracy}%</span></td>

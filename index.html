@@ -29,9 +29,15 @@
     <div class="step-card"><div class="step-num">3</div><span class="step-icon">✋</span><div class="step-label">Angkat tangan kiri / kanan</div></div>
     <div class="step-card"><div class="step-num">4</div><span class="step-icon">🎯</span><div class="step-label">Tahan untuk menjawab</div></div>
   </div>
-  <div class="student-name-wrap" style="margin-bottom: 24px; max-width: 320px; width: 100%; display: flex; flex-direction: column; align-items: center; margin-left: auto; margin-right: auto;">
-    <label style="font-family: var(--font-body); font-weight: 800; font-size: 15px; color: var(--purple); display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">👤 Nama Siswa / Pengguna</label>
-    <input type="text" id="student-name" class="styled-input" style="text-align: center; font-size: 16px; padding: 12px; border-radius: 14px;" placeholder="Ketik namamu di sini..." value="Siswa Baru" />
+  <div class="student-name-wrap" style="margin-bottom: 24px; max-width: 320px; width: 100%; display: flex; flex-direction: column; align-items: center; margin-left: auto; margin-right: auto; gap: 12px;">
+    <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+      <label style="font-family: var(--font-body); font-weight: 800; font-size: 14px; color: var(--purple); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">👤 Nama Lengkap Siswa</label>
+      <input type="text" id="student-name" class="styled-input" style="text-align: center; font-size: 16px; padding: 10px; border-radius: 12px;" placeholder="Ketik namamu..." value="Siswa Baru" />
+    </div>
+    <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+      <label style="font-family: var(--font-body); font-weight: 800; font-size: 14px; color: var(--purple); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">🏫 Kelas / Tingkat</label>
+      <input type="text" id="student-class" class="styled-input" style="text-align: center; font-size: 16px; padding: 10px; border-radius: 12px;" placeholder="Ketik kelas (misal: 7-A)..." value="7-A" />
+    </div>
   </div>
   <button class="btn-primary" onclick="showScreen('setup')">🚀 Mulai Sekarang!</button><br>
   <button class="btn-secondary" style="margin-top: 10px;" onclick="skipToGame()">⌨️ Lewati (pakai keyboard)</button>
@@ -61,10 +67,10 @@
           <option value="mahasiswa">Perguruan Tinggi (Mahasiswa)</option>
         </select>
       </div>
-      <button type="button" class="btn-manage" onclick="openQuestionManager()">📝 Kelola Bank Soal</button>
       <div id="setup-status" class="setup-status"></div>
       <button class="btn-primary" style="margin-top:24px;width:100%;font-size:17px;" onclick="loadModel()">📷 Load Model & Buka Kamera</button><br>
-      <button class="btn-secondary" style="margin-top:10px;width:100%;" onclick="showScreen('intro')">← Kembali</button>
+      <button class="btn-secondary" style="margin-top:10px;width:100%;" onclick="showScreen('intro')">← Kembali</button><br>
+      <button type="button" class="btn-secondary" style="margin-top: 18px; font-size: 12px; padding: 6px 14px; border-color: transparent; background: transparent; color: var(--muted); cursor: pointer;" onclick="promptTeacherLogin()">🔑 Mode Guru</button>
     </div>
   </div>
 </div>
@@ -195,10 +201,11 @@
               <tr>
                 <th style="width: 5%">No</th>
                 <th style="width: 20%">Tanggal</th>
-                <th style="width: 25%">Nama Siswa</th>
+                <th style="width: 20%">Nama Siswa</th>
+                <th style="width: 15%">Kelas</th>
                 <th style="width: 15%">Tingkat</th>
                 <th style="width: 10%">Skor</th>
-                <th style="width: 15%">Akurasi</th>
+                <th style="width: 10%">Akurasi</th>
                 <th style="width: 10%">Waktu</th>
               </tr>
             </thead>

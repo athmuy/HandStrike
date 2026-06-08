@@ -251,21 +251,23 @@ switch ($action) {
         }
 
         $student_name = isset($input['student_name']) ? trim($input['student_name']) : '';
+        $class_name = isset($input['class_name']) ? trim($input['class_name']) : '';
         $level = isset($input['level']) ? $input['level'] : '';
         $score = isset($input['score']) ? (int)$input['score'] : 0;
         $accuracy = isset($input['accuracy']) ? (int)$input['accuracy'] : 0;
         $time_spent = isset($input['time_spent']) ? $input['time_spent'] : '';
 
-        if (empty($student_name) || empty($level) || empty($time_spent)) {
+        if (empty($student_name) || empty($class_name) || empty($level) || empty($time_spent)) {
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Nama siswa dan data skor tidak lengkap!']);
+            echo json_encode(['status' => 'error', 'message' => 'Nama siswa, kelas, dan data skor tidak lengkap!']);
             break;
         }
 
         try {
-            $stmt = $pdo->prepare("INSERT INTO scores (student_name, level, score, accuracy, time_spent) VALUES (:name, :level, :score, :accuracy, :time)");
+            $stmt = $pdo->prepare("INSERT INTO scores (student_name, class_name, level, score, accuracy, time_spent) VALUES (:name, :class, :level, :score, :accuracy, :time)");
             $stmt->execute([
                 'name' => $student_name,
+                'class' => $class_name,
                 'level' => $level,
                 'score' => $score,
                 'accuracy' => $accuracy,
@@ -292,6 +294,7 @@ switch ($action) {
                 $scores[] = [
                     'id' => (int)$row['id'],
                     'student_name' => $row['student_name'],
+                    'class_name' => $row['class_name'],
                     'level' => $row['level'],
                     'score' => (int)$row['score'],
                     'accuracy' => (int)$row['accuracy'],
