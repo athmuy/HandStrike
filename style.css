@@ -8,23 +8,23 @@
 :root {
   --white:    #ffffff;
   --bg:       #FAF9F6; /* Ivory/Alabaster hangat */
-  --red:      #FFC6FF; /* Pastel Pink (Pilihan Kanan) */
-  --green:    #B5E2B9; /* Pastel Green (Jawaban Benar) */
-  --yellow:   #FFDAC1; /* Pastel Yellow */
-  --blue:     #A0C4FF; /* Pastel Blue (Pilihan Kiri) */
-  --orange:   #FFD3B6; /* Pastel Orange */
-  --purple:   #BE9FE1; /* Pastel Purple (Primary Theme & Buttons) */
-  --pink:     #FFC6FF; /* Pastel Pink */
-  --teal:     #CAFFBF;
-  --red-d:    #E8A5C2; /* Shadow Pastel Pink */
-  --green-d:  #8FC294; /* Shadow Pastel Green */
-  --yellow-d: #E5BCA0;
-  --blue-d:   #7EA6E0; /* Shadow Pastel Blue */
-  --orange-d: #E0B598;
-  --purple-d: #A084CA; /* Shadow Pastel Purple */
-  --text:     #4A4E69; /* Charcoal dengan nuansa ungu/slate lembut */
-  --muted:    #9A8C98; /* Slate gray hangat & lembut */
-  --border:   #F0EBF4; /* Border ungu/ivory yang sangat halus */
+  --red:      #F15BB5; /* Vibrant Pink (Pilihan Kanan) */
+  --green:    #06D6A0; /* Vibrant Mint Green (Jawaban Benar) */
+  --yellow:   #FFD166; /* Vibrant Golden Yellow */
+  --blue:     #3A86FF; /* Vibrant Sky Blue (Pilihan Kiri) */
+  --orange:   #F4A261;
+  --purple:   #9B5DE5; /* Vibrant Purple (Primary Theme & Buttons) */
+  --pink:     #FF6B9D;
+  --teal:     #00F5D4;
+  --red-d:    #D63E9B; /* Shadow Pink */
+  --green-d:  #00B580; /* Shadow Green */
+  --yellow-d: #E5B33C;
+  --blue-d:   #2A75E6; /* Shadow Blue */
+  --orange-d: #d08447;
+  --purple-d: #833AB4; /* Shadow Purple */
+  --text:     #2B2D42; /* Charcoal gelap yang elegan */
+  --muted:    #8D99AE; /* Slate gray lembut */
+  --border:   #EDF2F4; /* Border halus */
   --font-head: 'Fredoka One', cursive;
   --font-body: 'Nunito', sans-serif;
 }
@@ -260,11 +260,11 @@ body::before {
 }
 .cam-view-wrap.active-left {
   border-color: var(--blue);
-  box-shadow: 0 0 24px rgba(78, 168, 222, 0.45);
+  box-shadow: 0 0 24px rgba(58, 134, 255, 0.5);
 }
 .cam-view-wrap.active-right {
   border-color: var(--red);
-  box-shadow: 0 0 24px rgba(231, 111, 81, 0.45);
+  box-shadow: 0 0 24px rgba(241, 91, 181, 0.5);
 }
 #webcam-canvas {
   width: 100%;
@@ -372,8 +372,8 @@ body::before {
 .choice-card.left  { background: var(--blue); box-shadow: 0 6px 0 var(--blue-d); }
 .choice-card.right { background: var(--red);  box-shadow: 0 6px 0 var(--red-d); }
 .choice-card.active { transform: translateY(-6px) scale(1.03); }
-.choice-card.active.left  { box-shadow: 0 10px 0 var(--blue-d), 0 12px 32px rgba(78,168,222,0.35); }
-.choice-card.active.right { box-shadow: 0 10px 0 var(--red-d),  0 12px 32px rgba(231,111,81,0.35); }
+.choice-card.active.left  { box-shadow: 0 10px 0 var(--blue-d), 0 12px 32px rgba(58, 134, 255, 0.4); }
+.choice-card.active.right { box-shadow: 0 10px 0 var(--red-d),  0 12px 32px rgba(241, 91, 181, 0.4); }
 .choice-card.correct {
   background: var(--green) !important;
   box-shadow: 0 6px 0 var(--green-d) !important;
@@ -386,8 +386,7 @@ body::before {
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--text);
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -396,10 +395,10 @@ body::before {
 .choice-text {
   font-family: var(--font-head);
   font-size: clamp(15px, 2.2vw, 22px);
-  color: var(--text);
+  color: white;
   text-align: center;
   line-height: 1.25;
-  text-shadow: 0 1px 2px rgba(255,255,255,0.4);
+  text-shadow: 0 1.5px 3px rgba(0,0,0,0.15);
 }
 .feedback-overlay {
   position: fixed;
@@ -421,8 +420,8 @@ body::before {
   animation: feedPop 0.3s cubic-bezier(0.34,1.56,0.64,1);
   border-bottom: 8px solid;
 }
-.feedback-bubble.correct { background: var(--green); color: var(--text); border-color: var(--green-d); }
-.feedback-bubble.wrong   { background: var(--red);   color: var(--text); border-color: var(--red-d); }
+.feedback-bubble.correct { background: var(--green); color: white; border-color: var(--green-d); }
+.feedback-bubble.wrong   { background: var(--red);   color: white; border-color: var(--red-d); }
 @keyframes feedPop { from { transform: scale(0.4) rotate(-6deg); } to { transform: scale(1) rotate(0deg); } }
 
 /* RESULT */
