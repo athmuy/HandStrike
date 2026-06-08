@@ -31,6 +31,21 @@ let activeLevel = "smp";
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
+  
+  // Jika kembali ke beranda (intro), matikan kamera secara total
+  if (id === 'intro') {
+    stopCameraStream();
+  }
+}
+
+function stopCameraStream() {
+  stopPredictionLoop();
+  const video = window._handstrike_video;
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+    window._handstrike_video = null;
+  }
+  isCameraMode = false;
 }
 
 // Keyboard fallback
@@ -393,12 +408,6 @@ async function endGame() {
   stopPredictionLoop();
   if (cooldownTimer) { clearInterval(cooldownTimer); cooldownTimer = null; }
   isCooldown = false;
-  // Hentikan stream kamera native
-  const video = window._handstrike_video;
-  if (video && video.srcObject) {
-    video.srcObject.getTracks().forEach(t => t.stop());
-    window._handstrike_video = null;
-  }
   document.removeEventListener('keydown', keyboardFallback);
   const total   = QUIZ_DATA.length;
   const pct     = Math.round((correctCount / total) * 100);
