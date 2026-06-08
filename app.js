@@ -28,7 +28,7 @@ function showScreen(id) {
 }
 
 // Keyboard fallback
-function skipToGame() {
+async function skipToGame() {
   isCameraMode = false;
   document.querySelector('.cam-panel').style.opacity = '0.5';
   document.querySelector('.cam-panel').style.pointerEvents = 'none';
@@ -36,7 +36,7 @@ function skipToGame() {
   // Load selected level quiz data
   const levelSelect = document.getElementById('level-select');
   const selectedLevel = levelSelect ? levelSelect.value : 'smp';
-  QUIZ_DATA = getQuizDataForLevel(selectedLevel);
+  QUIZ_DATA = await getQuizDataForLevel(selectedLevel);
   
   showScreen('game');
   loadQuestionWithCooldown(0);
@@ -59,7 +59,7 @@ function setStatus(type, html) {
   el.innerHTML = html;
 }
 
-function startCountdown() {
+async function startCountdown() {
   const overlay = document.getElementById('countdown-overlay');
   const numEl   = document.getElementById('countdown-num');
   overlay.style.display = 'flex';
@@ -67,7 +67,7 @@ function startCountdown() {
   // Load selected level quiz data
   const levelSelect = document.getElementById('level-select');
   const selectedLevel = levelSelect ? levelSelect.value : 'smp';
-  QUIZ_DATA = getQuizDataForLevel(selectedLevel);
+  QUIZ_DATA = await getQuizDataForLevel(selectedLevel);
   
   let count = 3;
   numEl.textContent = count;
@@ -375,7 +375,7 @@ function endGame() {
   showScreen('result');
 }
 
-function restartGame() {
+async function restartGame() {
   currentQ = 0; score = 0; correctCount = 0; gameStartTime = null;
   currentGesture = null; holdStartTime = null; isAnswering = false;
   isCooldown = false;
@@ -384,7 +384,7 @@ function restartGame() {
   // Re-load selected level quiz data
   const levelSelect = document.getElementById('level-select');
   const selectedLevel = levelSelect ? levelSelect.value : 'smp';
-  QUIZ_DATA = getQuizDataForLevel(selectedLevel);
+  QUIZ_DATA = await getQuizDataForLevel(selectedLevel);
   
   document.getElementById('score-display').textContent = '0';
   document.getElementById('hold-bar').style.width = '0%';
@@ -404,6 +404,8 @@ function restartGame() {
 /* ═══════════════════════════════════════
    FUNGSI MANAJEMEN BANK SOAL (MODAL UI)
    ═══════════════════════════════════════ */
+
+let currentManagerQuestions = [];
 
 function openQuestionManager() {
   const managerSelect = document.getElementById('manager-level-select');
@@ -425,9 +427,11 @@ function closeQuestionManager() {
   }
 }
 
-function renderQuestionList() {
+async function renderQuestionList() {
   const level = document.getElementById('manager-level-select').value;
-  const questions = getQuizDataForLevel(level);
+  const questions = await getQuizDataForLevel(level);
+  currentManagerQuestions = questions;
+  
   const tbody = document.getElementById('question-table-body');
   tbody.innerHTML = '';
   
@@ -441,7 +445,7 @@ function renderQuestionList() {
       <td><span style="font-weight: 800; color: ${q.correct === 'left' ? 'var(--blue)' : 'var(--red)'}">${q.correct === 'left' ? 'Kiri' : 'Kanan'}</span></td>
       <td>
         <button class="btn-primary-sm" style="padding: 4px 8px; font-size: 11px; margin-right: 4px;" onclick="editQuestion(${idx})">✏️</button>
-        <button class="btn-danger-sm" style="padding: 4px 8px; font-size: 11px;" onclick="deleteQuestion(${idx})">🗑️</button>
+        <button class="btn-danger-sm" style="padding: 4px 8px; font-size: 11px;" onclick="deleteQuestion(${q.id})">🗑️</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -451,9 +455,7 @@ function renderQuestionList() {
 }
 
 function editQuestion(index) {
-  const level = document.getElementById('manager-level-select').value;
-  const questions = getQuizDataForLevel(level);
-  const q = questions[index];
+  const q = currentManagerQuestions[index];
   
   document.getElementById('edit-question-index').value = index;
   document.getElementById('input-q-text').value = q.question;
@@ -479,9 +481,8 @@ function cancelEdit() {
   document.getElementById('btn-cancel-edit').style.display = 'none';
 }
 
-function saveQuestion() {
+async function saveQuestion() {
   const level = document.getElementById('manager-level-select').value;
-  const questions = getQuizDataForLevel(level);
   
   const qText = document.getElementById('input-q-text').value.trim();
   const qLeft = document.getElementById('input-q-left').value.trim();
@@ -494,35 +495,39 @@ function saveQuestion() {
     return;
   }
   
-  const newQuestion = {
+  let id = -1;
+  if (editIndex !== -1) {
+    id = currentManagerQuestions[editIndex].id;
+  }
+  
+  const questionData = {
+    id: id,
     question: qText,
     left: qLeft,
     right: qRight,
     correct: qCorrect
   };
   
-  if (editIndex === -1) {
-    questions.push(newQuestion);
+  const res = await saveQuizDataForLevel(level, questionData);
+  if (res.status === 'success') {
+    await renderQuestionList();
   } else {
-    questions[editIndex] = newQuestion;
+    alert("Gagal menyimpan: " + res.message);
   }
-  
-  saveQuizDataForLevel(level, questions);
-  renderQuestionList();
 }
 
-function deleteQuestion(index) {
+async function deleteQuestion(id) {
   if (!confirm("Apakah Anda yakin ingin menghapus pertanyaan ini dari bank soal?")) return;
   
-  const level = document.getElementById('manager-level-select').value;
-  const questions = getQuizDataForLevel(level);
-  questions.splice(index, 1);
-  
-  saveQuizDataForLevel(level, questions);
-  renderQuestionList();
+  const res = await deleteQuizData(id);
+  if (res.status === 'success') {
+    await renderQuestionList();
+  } else {
+    alert("Gagal menghapus: " + res.message);
+  }
 }
 
-function resetQuestionsToDefault() {
+async function resetQuestionsToDefault() {
   const level = document.getElementById('manager-level-select').value;
   let levelName = "";
   if (level === 'sd') levelName = "Sekolah Dasar (SD)";
@@ -532,8 +537,12 @@ function resetQuestionsToDefault() {
   
   if (!confirm(`Apakah Anda yakin ingin mengatur ulang kategori ${levelName} ke setelan bawaan? Seluruh perubahan kustom Anda pada kategori ini akan hilang.`)) return;
   
-  resetQuizDataForLevel(level);
-  renderQuestionList();
+  const res = await resetQuizDataForLevel(level);
+  if (res.status === 'success') {
+    await renderQuestionList();
+  } else {
+    alert("Gagal menyetel ulang: " + res.message);
+  }
 }
 
 function escapeHtml(str) {

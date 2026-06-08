@@ -1,172 +1,89 @@
 /* ═══════════════════════════════════════
    quiz-data.js
-   Data pertanyaan kuis HandStrike per tingkat pendidikan
-   dan sistem penyimpanan local database (localStorage)
+   Menghubungkan frontend ke Backend API (api.php)
+   untuk mengambil & menyimpan soal dari MySQL
    ═══════════════════════════════════════ */
 
-const DEFAULT_QUIZ_DATA = {
-  sd: [
-    {
-      question: "Berapa hasil dari 5 + 3?",
-      left: "8",
-      right: "7",
-      correct: "left"
-    },
-    {
-      question: "Hewan apa yang bernapas dengan insang?",
-      left: "Kucing",
-      right: "Ikan",
-      correct: "right"
-    },
-    {
-      question: "Warna bendera negara Indonesia adalah...",
-      left: "Merah Putih",
-      right: "Putih Merah",
-      correct: "left"
-    },
-    {
-      question: "Berapa jumlah kaki pada hewan sapi?",
-      left: "2",
-      right: "4",
-      correct: "right"
-    },
-    {
-      question: "Matahari terbit di sebelah mana?",
-      left: "Timur",
-      right: "Barat",
-      correct: "left"
-    }
-  ],
-  smp: [
-    {
-      question: "Mana yang merupakan ibu kota Indonesia?",
-      left: "Jakarta",
-      right: "Surabaya",
-      correct: "left"
-    },
-    {
-      question: "Berapa hasil dari 7 × 8?",
-      left: "54",
-      right: "56",
-      correct: "right"
-    },
-    {
-      question: "Candi Borobudur terletak di provinsi apa?",
-      left: "Jawa Tengah",
-      right: "Yogyakarta",
-      correct: "left"
-    },
-    {
-      question: "Zat hijau daun yang berperan dalam fotosintesis disebut...",
-      left: "Klorofil",
-      right: "Hemoglobin",
-      correct: "left"
-    },
-    {
-      question: "Berapa jumlah provinsi di Indonesia saat ini (2024)?",
-      left: "34",
-      right: "38",
-      correct: "right"
-    }
-  ],
-  sma: [
-    {
-      question: "Planet mana yang paling dekat dengan matahari?",
-      left: "Merkurius",
-      right: "Venus",
-      correct: "left"
-    },
-    {
-      question: "Siapa penemu telepon pertama kali?",
-      left: "Alexander Graham Bell",
-      right: "Thomas Edison",
-      correct: "left"
-    },
-    {
-      question: "Rumus kimia dari senyawa air adalah...",
-      left: "CO2",
-      right: "H2O",
-      correct: "right"
-    },
-    {
-      question: "Siapakah presiden pertama Republik Indonesia?",
-      left: "Soekarno",
-      right: "Soeharto",
-      correct: "left"
-    },
-    {
-      question: "Unsur kimia dengan lambang Au di tabel periodik adalah...",
-      left: "Emas",
-      right: "Perak",
-      correct: "left"
-    }
-  ],
-  mahasiswa: [
-    {
-      question: "Bahasa pemrograman apa yang digunakan secara native di web browser?",
-      left: "Python",
-      right: "JavaScript",
-      correct: "right"
-    },
-    {
-      question: "Siapakah ilmuwan yang mengemukakan teori relativitas?",
-      left: "Albert Einstein",
-      right: "Isaac Newton",
-      correct: "left"
-    },
-    {
-      question: "Protokol transfer data aman yang digunakan secara luas di web adalah...",
-      left: "HTTP",
-      right: "HTTPS",
-      correct: "right"
-    },
-    {
-      question: "Algoritma pencarian yang membagi data terurut menjadi dua bagian adalah...",
-      left: "Binary Search",
-      right: "Bubble Sort",
-      correct: "left"
-    },
-    {
-      question: "Konsep OOP yang memungkinkan kelas mewarisi sifat kelas lain disebut...",
-      left: "Polimorfisme",
-      right: "Inheritance",
-      correct: "right"
-    }
-  ]
-};
+const API_URL = "api.php";
 
-// Global variables for active quiz in app.js
+// Variabel global untuk menyimpan data kuis aktif
 let QUIZ_DATA = [];
 
-// Local storage key prefix
-const STORAGE_KEY_PREFIX = "handstrike_quiz_";
-
-// Load data from localStorage or fallback to defaults
-function initQuizData() {
-  const levels = ["sd", "smp", "sma", "mahasiswa"];
-  levels.forEach(level => {
-    const key = STORAGE_KEY_PREFIX + level;
-    if (!localStorage.getItem(key)) {
-      localStorage.setItem(key, JSON.stringify(DEFAULT_QUIZ_DATA[level]));
+// Mengambil data soal dari database MySQL via api.php
+async function getQuizDataForLevel(level) {
+  try {
+    const res = await fetch(`${API_URL}?action=get&level=${level}`);
+    if (!res.ok) throw new Error("Gagal mengambil data dari server");
+    
+    const json = await res.json();
+    if (json.status === 'success') {
+      return json.data;
+    } else {
+      console.error("API error:", json.message);
+      return [];
     }
-  });
+  } catch (err) {
+    console.error("Gagal memuat bank soal dari MySQL:", err);
+    return [];
+  }
 }
 
-function getQuizDataForLevel(level) {
-  const key = STORAGE_KEY_PREFIX + level;
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : (DEFAULT_QUIZ_DATA[level] || []);
+// Menyimpan (Menambah baru atau Mengedit) pertanyaan ke MySQL via api.php
+async function saveQuizDataForLevel(level, questionData) {
+  try {
+    const res = await fetch(`${API_URL}?action=save`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        level: level,
+        ...questionData
+      })
+    });
+    
+    if (!res.ok) throw new Error("Gagal menyimpan data ke server");
+    return await res.json();
+  } catch (err) {
+    console.error("Gagal menyimpan pertanyaan ke MySQL:", err);
+    return { status: "error", message: err.message };
+  }
 }
 
-function saveQuizDataForLevel(level, data) {
-  const key = STORAGE_KEY_PREFIX + level;
-  localStorage.setItem(key, JSON.stringify(data));
+// Menghapus pertanyaan dari MySQL berdasarkan ID database via api.php
+async function deleteQuizData(id) {
+  try {
+    const res = await fetch(`${API_URL}?action=delete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ id: id })
+    });
+    
+    if (!res.ok) throw new Error("Gagal menghapus data di server");
+    return await res.json();
+  } catch (err) {
+    console.error("Gagal menghapus pertanyaan dari MySQL:", err);
+    return { status: "error", message: err.message };
+  }
 }
 
-function resetQuizDataForLevel(level) {
-  const key = STORAGE_KEY_PREFIX + level;
-  localStorage.setItem(key, JSON.stringify(DEFAULT_QUIZ_DATA[level]));
+// Mengatur ulang (reset) bank soal level tertentu ke setelan bawaan via api.php
+async function resetQuizDataForLevel(level) {
+  try {
+    const res = await fetch(`${API_URL}?action=reset`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ level: level })
+    });
+    
+    if (!res.ok) throw new Error("Gagal mengatur ulang data di server");
+    return await res.json();
+  } catch (err) {
+    console.error("Gagal reset bank soal di MySQL:", err);
+    return { status: "error", message: err.message };
+  }
 }
-
-// Initial initialization of localStorage
-initQuizData();
