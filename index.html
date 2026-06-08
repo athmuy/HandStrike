@@ -24,30 +24,30 @@
   <div class="wave-tagline">✦ Kuis Interaktif Menggunakan Gerakan Tubuh ✦</div>
   <p class="intro-sub">Jawab kuis cukup dengan memiringkan kepala atau mengangkat tangan!<br>Kamera interaktif akan mendeteksi pilihanmu secara menyenangkan.</p>
   <div class="intro-steps">
-    <div class="step-card"><div class="step-num">1</div><span class="step-icon">📷</span><div class="step-label">Izinkan akses kamera</div></div>
-    <div class="step-card"><div class="step-num">2</div><span class="step-icon">✨</span><div class="step-label">Hubungkan sensor</div></div>
-    <div class="step-card"><div class="step-num">3</div><span class="step-icon">🙋</span><div class="step-label">Miringkan badan / angkat tangan</div></div>
-    <div class="step-card"><div class="step-num">4</div><span class="step-icon">🎯</span><div class="step-label">Tahan posisi untuk menjawab</div></div>
+    <div class="step-card"><div class="step-num">1</div><span class="step-icon"><img class="apple-emoji" src="https://emojicdn.elk.sh/📷" alt="📷"></span><div class="step-label">Izinkan akses kamera</div></div>
+    <div class="step-card"><div class="step-num">2</div><span class="step-icon"><img class="apple-emoji" src="https://emojicdn.elk.sh/✨" alt="✨"></span><div class="step-label">Hubungkan sensor</div></div>
+    <div class="step-card"><div class="step-num">3</div><span class="step-icon"><img class="apple-emoji" src="https://emojicdn.elk.sh/🙋" alt="🙋"></span><div class="step-label">Miringkan badan / angkat tangan</div></div>
+    <div class="step-card"><div class="step-num">4</div><span class="step-icon"><img class="apple-emoji" src="https://emojicdn.elk.sh/🎯" alt="🎯"></span><div class="step-label">Tahan posisi untuk menjawab</div></div>
   </div>
   <div class="student-name-wrap" style="margin-bottom: 24px; max-width: 320px; width: 100%; display: flex; flex-direction: column; align-items: center; margin-left: auto; margin-right: auto; gap: 12px;">
     <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-      <label style="font-family: var(--font-body); font-weight: 800; font-size: 14px; color: var(--purple); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">👤 Nama Lengkap Siswa</label>
+      <label style="font-family: var(--font-body); font-weight: 800; font-size: 14px; color: var(--purple); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;"><img class="apple-emoji" src="https://emojicdn.elk.sh/👤" alt="👤"> Nama Lengkap Siswa</label>
       <input type="text" id="student-name" class="styled-input" style="text-align: center; font-size: 16px; padding: 10px; border-radius: 12px;" placeholder="Ketik namamu..." value="Siswa Baru" />
     </div>
     <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-      <label style="font-family: var(--font-body); font-weight: 800; font-size: 14px; color: var(--purple); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;">🏫 Kelas / Tingkat</label>
+      <label style="font-family: var(--font-body); font-weight: 800; font-size: 14px; color: var(--purple); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;"><img class="apple-emoji" src="https://emojicdn.elk.sh/🏫" alt="🏫"> Kelas / Tingkat</label>
       <input type="text" id="student-class" class="styled-input" style="text-align: center; font-size: 16px; padding: 10px; border-radius: 12px;" placeholder="Ketik kelas (misal: 7-A)..." value="7-A" />
     </div>
   </div>
-  <button class="btn-primary" onclick="showScreen('setup')">🚀 Mulai Sekarang!</button><br>
-  <button class="btn-secondary" style="margin-top: 10px;" onclick="skipToGame()">⌨️ Lewati (pakai keyboard)</button>
+  <button class="btn-primary" onclick="showScreen('setup')"><img class="apple-emoji" src="https://emojicdn.elk.sh/🚀" alt="🚀"> Mulai Sekarang!</button><br>
+  <button class="btn-secondary" style="margin-top: 10px;" onclick="skipToGame()"><img class="apple-emoji" src="https://emojicdn.elk.sh/⌨️" alt="⌨️"> Lewati (pakai keyboard)</button>
 </div>
 
 <!-- SCREEN: SETUP -->
 <div id="screen-setup" class="screen">
   <div class="setup-wrapper">
     <div class="setup-box">
-      <div class="setup-title">⚙️ Persiapan Sensor Kamera</div>
+      <div class="setup-title"><img class="apple-emoji" src="https://emojicdn.elk.sh/⚙️" alt="⚙️"> Persiapan Sensor Kamera</div>
       <p>Hubungkan kuis dengan sensor kamera interaktif.<br>Kamera membaca 3 posisi: <strong style="color:var(--blue)">Kiri</strong>, <strong style="color:var(--red)">Kanan</strong>, dan <strong style="color:var(--muted)">Tengah (Netral)</strong>.</p>
       <div class="url-input-wrap">
         <label>Link Sensor Gerak (Teachable Machine)</label>
@@ -68,9 +68,9 @@
         </select>
       </div>
       <div id="setup-status" class="setup-status"></div>
-      <button class="btn-primary" style="margin-top:24px;width:100%;font-size:17px;" onclick="loadModel()">📷 Aktifkan Sensor & Buka Kamera</button><br>
+      <button class="btn-primary" style="margin-top:24px;width:100%;font-size:17px;" onclick="loadModel()"><img class="apple-emoji" src="https://emojicdn.elk.sh/📷" alt="📷"> Aktifkan Sensor & Buka Kamera</button><br>
       <button class="btn-secondary" style="margin-top:10px;width:100%;" onclick="showScreen('intro')">← Kembali</button><br>
-      <button type="button" class="btn-secondary" style="margin-top: 18px; font-size: 12px; padding: 6px 14px; border-color: transparent; background: transparent; color: var(--muted); cursor: pointer;" onclick="promptTeacherLogin()">🔑 Mode Guru</button>
+      <button type="button" class="btn-secondary" style="margin-top: 18px; font-size: 12px; padding: 6px 14px; border-color: transparent; background: transparent; color: var(--muted); cursor: pointer;" onclick="promptTeacherLogin()"><img class="apple-emoji" src="https://emojicdn.elk.sh/🔑" alt="🔑"> Mode Guru</button>
     </div>
   </div>
 </div>
@@ -78,7 +78,7 @@
 <!-- SCREEN: GAME -->
 <div id="screen-game" class="screen">
   <div class="cam-panel">
-    <div class="cam-header">📷 Kamera Interaktif</div>
+    <div class="cam-header"><img class="apple-emoji" src="https://emojicdn.elk.sh/📷" alt="📷"> Kamera Interaktif</div>
     <div class="cam-view-wrap"><canvas id="webcam-canvas" width="300" height="300"></canvas></div>
     <div class="detect-section-title">Kestabilan Posisi Gerak</div>
     <div class="detect-bars">
@@ -87,13 +87,13 @@
       <div class="detect-bar-item"><span class="detect-bar-label neutral">Netral</span><div class="detect-bar-track"><div class="detect-bar-fill neutral" id="bar-neutral"></div></div><span class="detect-pct" id="pct-neutral">0%</span></div>
     </div>
     <div class="gesture-display"><div class="gesture-label">Gerakan Terbaca</div><div class="gesture-value neutral" id="gesture-value">—</div></div>
-    <div class="hold-timer-wrap"><div class="hold-timer-label">⏳ Tahan 1.5 detik untuk jawab</div><div class="hold-bar-track"><div class="hold-bar-fill" id="hold-bar"></div></div></div>
+    <div class="hold-timer-wrap"><div class="hold-timer-label"><img class="apple-emoji" src="https://emojicdn.elk.sh/⏳" alt="⏳"> Tahan 1.5 detik untuk jawab</div><div class="hold-bar-track"><div class="hold-bar-fill" id="hold-bar"></div></div></div>
   </div>
   <div class="quiz-panel">
     <div class="quiz-topbar">
       <div class="topbar-logo"><span class="w1">H</span><span class="w2">a</span><span class="w3">n</span><span class="w4">d</span><span class="w5">S</span><span class="w6">t</span><span class="w7">r</span><span class="w8">i</span><span class="w9">k</span><span class="w10">e</span></div>
       <div class="quiz-progress-wrap"><div class="quiz-progress-label"><span>Progress</span><span id="progress-text">1 / 5</span></div><div class="quiz-progress-track"><div class="quiz-progress-fill" id="progress-fill" style="width:20%"></div></div></div>
-      <div class="quiz-score-badge">⭐ <span id="score-display">0</span> poin</div>
+      <div class="quiz-score-badge"><img class="apple-emoji" src="https://emojicdn.elk.sh/⭐" alt="⭐"> <span id="score-display">0</span> poin</div>
     </div>
     <div class="quiz-main">
       <div class="question-bubble"><div class="question-number" id="q-number">Pertanyaan 1</div><div class="question-text" id="q-text">Memuat pertanyaan...</div></div>
@@ -112,22 +112,22 @@
     <div class="result-title">Selesai!</div>
     <div class="result-score" id="result-pct">80%</div>
     <div class="result-label" id="result-label">Benar 4 dari 5 pertanyaan</div>
-    <div class="result-stats"><div class="stat-chip correct">✅ Benar: <span id="stat-correct">4</span></div><div class="stat-chip wrong">❌ Salah: <span id="stat-wrong">1</span></div><div class="stat-chip time">⏱️ <span id="stat-time">—</span></div></div>
-    <div class="result-actions"><button class="btn-green" onclick="restartGame()">🔁 Main Lagi</button><button class="btn-secondary" onclick="showScreen('intro')">🏠 Beranda</button></div>
+    <div class="result-stats"><div class="stat-chip correct"><img class="apple-emoji" src="https://emojicdn.elk.sh/✅" alt="✅"> Benar: <span id="stat-correct">4</span></div><div class="stat-chip wrong"><img class="apple-emoji" src="https://emojicdn.elk.sh/❌" alt="❌"> Salah: <span id="stat-wrong">1</span></div><div class="stat-chip time"><img class="apple-emoji" src="https://emojicdn.elk.sh/⏱️" alt="⏱️"> Waktu: <span id="stat-time">—</span></div></div>
+    <div class="result-actions"><button class="btn-green" onclick="restartGame()"><img class="apple-emoji" src="https://emojicdn.elk.sh/🔁" alt="🔁"> Main Lagi</button><button class="btn-secondary" onclick="showScreen('intro')"><img class="apple-emoji" src="https://emojicdn.elk.sh/🏠" alt="🏠"> Beranda</button></div>
   </div>
 </div>
 
 <!-- OVERLAYS -->
 <div class="countdown-overlay" id="countdown-overlay"><div class="countdown-number" id="countdown-num">3</div></div>
-<div class="feedback-overlay" id="feedback-overlay"><div class="feedback-bubble" id="feedback-bubble">✓</div></div>
+<div class="feedback-overlay" id="feedback-overlay"><div class="feedback-bubble" id="feedback-bubble"><img class="apple-emoji" src="https://emojicdn.elk.sh/✔️" alt="✔️"></div></div>
 
 <!-- MODAL: KELOLA BANK SOAL -->
 <div class="modal-overlay" id="modal-question-manager">
   <div class="modal-card">
     <div class="modal-header">
       <div class="modal-tabs">
-        <button class="modal-tab active" id="btn-tab-questions" onclick="switchModalTab('questions')">📝 Kelola Soal</button>
-        <button class="modal-tab" id="btn-tab-scores" onclick="switchModalTab('scores')">🏆 Riwayat Skor Siswa</button>
+        <button class="modal-tab active" id="btn-tab-questions" onclick="switchModalTab('questions')"><img class="apple-emoji" src="https://emojicdn.elk.sh/📝" alt="📝"> Kelola Soal</button>
+        <button class="modal-tab" id="btn-tab-scores" onclick="switchModalTab('scores')"><img class="apple-emoji" src="https://emojicdn.elk.sh/🏆" alt="🏆"> Riwayat Skor Siswa</button>
       </div>
       <button class="btn-close-modal" onclick="closeQuestionManager()">×</button>
     </div>
@@ -163,7 +163,7 @@
         </div>
 
         <div class="question-form-container" style="margin-top: 20px;">
-          <h4 id="form-title" class="form-title">➕ Tambah Pertanyaan Baru</h4>
+          <h4 id="form-title" class="form-title"><img class="apple-emoji" id="form-title-icon" src="https://emojicdn.elk.sh/➕" alt="➕"> <span id="form-title-text">Tambah Pertanyaan Baru</span></h4>
           <input type="hidden" id="edit-question-index" value="-1" />
           <div class="form-group">
             <label>Teks Pertanyaan</label>
@@ -221,7 +221,7 @@
         <button class="btn-danger-sm" onclick="resetQuestionsToDefault()">Reset ke Default</button>
       </div>
       <div id="footer-actions-scores" style="display: none;">
-        <button class="btn-danger-sm" onclick="clearAllScoresHistory()">🗑️ Hapus Semua Riwayat</button>
+        <button class="btn-danger-sm" onclick="clearAllScoresHistory()"><img class="apple-emoji" src="https://emojicdn.elk.sh/🗑️" alt="🗑️"> Hapus Semua Riwayat</button>
       </div>
       <button class="btn-secondary" style="font-size: 14px; padding: 10px 24px;" onclick="closeQuestionManager()">Tutup</button>
     </div>

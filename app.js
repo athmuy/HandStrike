@@ -364,7 +364,7 @@ function loadQuestionWithCooldown(index) {
   
   let cooldownLeft = 1.5;
   const holdTimerLabel = document.querySelector('.hold-timer-label');
-  holdTimerLabel.textContent = `✋ Turunkan tangan & Bersiap... (${cooldownLeft.toFixed(1)}s)`;
+  holdTimerLabel.innerHTML = `<img class="apple-emoji" src="https://emojicdn.elk.sh/✋" alt="✋"> Turunkan tangan & Bersiap... (${cooldownLeft.toFixed(1)}s)`;
   
   if (cooldownTimer) clearInterval(cooldownTimer);
   cooldownTimer = setInterval(() => {
@@ -377,9 +377,9 @@ function loadQuestionWithCooldown(index) {
       
       choiceLeft.classList.remove('cooldown');
       choiceRight.classList.remove('cooldown');
-      holdTimerLabel.textContent = `⏳ Tahan 1.5 detik untuk jawab`;
+      holdTimerLabel.innerHTML = `<img class="apple-emoji" src="https://emojicdn.elk.sh/⏳" alt="⏳"> Tahan 1.5 detik untuk jawab`;
     } else {
-      holdTimerLabel.textContent = `✋ Turunkan tangan & Bersiap... (${cooldownLeft.toFixed(1)}s)`;
+      holdTimerLabel.innerHTML = `<img class="apple-emoji" src="https://emojicdn.elk.sh/✋" alt="✋"> Turunkan tangan & Bersiap... (${cooldownLeft.toFixed(1)}s)`;
     }
   }, 100);
 }
@@ -403,7 +403,8 @@ async function endGame() {
   // Simpan skor siswa ke database secara asinkron
   await saveStudentScore(studentName, studentClass, activeLevel, score, pct, timeStr);
 
-  document.getElementById('result-trophy').textContent = pct >= 80 ? '🏆' : pct >= 50 ? '🥈' : '🥉';
+  const trophyImg = pct >= 80 ? '🏆' : pct >= 50 ? '🥈' : '🥉';
+  document.getElementById('result-trophy').innerHTML = `<img class="apple-emoji" style="width: 72px; height: 72px;" src="https://emojicdn.elk.sh/${trophyImg}" alt="trophy">`;
   document.getElementById('result-pct').textContent    = pct + '%';
   document.getElementById('result-label').textContent  = `Benar ${correctCount} dari ${total}`;
   document.getElementById('stat-correct').textContent  = correctCount;
@@ -513,8 +514,8 @@ async function renderQuestionList() {
       <td>${escapeHtml(q.right)}</td>
       <td><span style="font-weight: 800; color: ${q.correct === 'left' ? 'var(--blue)' : 'var(--red)'}">${q.correct === 'left' ? 'Kiri' : 'Kanan'}</span></td>
       <td>
-        <button class="btn-primary-sm" style="padding: 4px 8px; font-size: 11px; margin-right: 4px;" onclick="editQuestion(${idx})">✏️</button>
-        <button class="btn-danger-sm" style="padding: 4px 8px; font-size: 11px;" onclick="deleteQuestion(${q.id})">🗑️</button>
+        <button class="btn-primary-sm" style="padding: 4px 8px; font-size: 11px; margin-right: 4px;" onclick="editQuestion(${idx})"><img class="apple-emoji" src="https://emojicdn.elk.sh/✏️" alt="✏️"></button>
+        <button class="btn-danger-sm" style="padding: 4px 8px; font-size: 11px;" onclick="deleteQuestion(${q.id})"><img class="apple-emoji" src="https://emojicdn.elk.sh/🗑️" alt="🗑️"></button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -568,7 +569,8 @@ function editQuestion(index) {
   document.getElementById('input-q-right').value = q.right;
   document.getElementById('input-q-correct').value = q.correct;
   
-  document.getElementById('form-title').textContent = `✏️ Edit Pertanyaan #${index + 1}`;
+  document.getElementById('form-title-text').textContent = `Edit Pertanyaan #${index + 1}`;
+  document.getElementById('form-title-icon').src = 'https://emojicdn.elk.sh/✏️';
   document.getElementById('btn-cancel-edit').style.display = 'inline-block';
   
   // Scroll form ke area input
@@ -582,7 +584,8 @@ function cancelEdit() {
   document.getElementById('input-q-right').value = "";
   document.getElementById('input-q-correct').value = "left";
   
-  document.getElementById('form-title').textContent = "➕ Tambah Pertanyaan Baru";
+  document.getElementById('form-title-text').textContent = "Tambah Pertanyaan Baru";
+  document.getElementById('form-title-icon').src = 'https://emojicdn.elk.sh/➕';
   document.getElementById('btn-cancel-edit').style.display = 'none';
 }
 
