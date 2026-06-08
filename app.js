@@ -16,6 +16,8 @@ let gameStartTime = null;
 let currentGesture = null;
 let holdStartTime = null;
 let isAnswering = false;
+let isCooldown = false;
+let cooldownTimer = null;
 let predictionLoop = null;
 let classLabels = { left: 'kiri', right: 'kanan', neutral: 'netral' };
 
@@ -30,8 +32,14 @@ function skipToGame() {
   isCameraMode = false;
   document.querySelector('.cam-panel').style.opacity = '0.5';
   document.querySelector('.cam-panel').style.pointerEvents = 'none';
+  
+  // Load selected level quiz data
+  const levelSelect = document.getElementById('level-select');
+  const selectedLevel = levelSelect ? levelSelect.value : 'smp';
+  QUIZ_DATA = getQuizDataForLevel(selectedLevel);
+  
   showScreen('game');
-  loadQuestion(0);
+  loadQuestionWithCooldown(0);
   gameStartTime = Date.now();
   document.addEventListener('keydown', keyboardFallback);
 }
@@ -43,6 +51,45 @@ function keyboardFallback(e) {
 }
 
 // Load model & camera
+
+
+function setStatus(type, html) {
+  const el = document.getElementById('setup-status');
+  el.className = 'setup-status ' + type;
+  el.innerHTML = html;
+}
+
+function startCountdown() {
+  const overlay = document.getElementById('countdown-overlay');
+  const numEl   = document.getElementById('countdown-num');
+  overlay.style.display = 'flex';
+  
+  // Load selected level quiz data
+  const levelSelect = document.getElementById('level-select');
+  const selectedLevel = levelSelect ? levelSelect.value : 'smp';
+  QUIZ_DATA = getQuizDataForLevel(selectedLevel);
+  
+  let count = 3;
+  numEl.textContent = count;
+  const iv = setInterval(() => {
+    count--;
+    if (count <= 0) {
+      clearInterval(iv);
+      overlay.style.display = 'none';
+      showScreen('game');
+      loadQuestionWithCooldown(0);
+      gameStartTime = Date.now();
+      if (isCameraMode) startPredictionLoop();
+    } else {
+      numEl.style.animation = 'none';
+      void numEl.offsetWidth;
+      numEl.style.animation = 'countPop 0.5s cubic-bezier(0.34,1.56,0.64,1)';
+      numEl.textContent = count;
+    }
+  }, 1000);
+}
+
+// Load model & camera - FIXED: pakai getUserMedia native
 async function loadModel() {
   if (typeof window.tmPose === 'undefined') {
     setStatus('error', '❌ Library belum termuat. Refresh halaman (Ctrl+F5).');
@@ -66,16 +113,24 @@ async function loadModel() {
     model = await window.tmPose.load(modelURL + 'model.json', modelURL + 'metadata.json');
     setStatus('loading', '<span class="spinner"></span> Membuka kamera...');
 
-    const size = 300;
-    // flip=false — kita akan flip sendiri di canvas agar bebas dari bug webcam.canvas
-    webcam = new window.tmPose.Webcam(size, size, false);
-    await webcam.setup();
-    await webcam.play();
+    // Gunakan getUserMedia native — jauh lebih stabil
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+
+    // Buat video element tersembunyi sebagai sumber frame
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.setAttribute('playsinline', true);
+    video.muted = true;
+    await video.play();
+
+    // Simpan referensi video agar bisa dipakai di loop
+    window._handstrike_video = video;
 
     isCameraMode = true;
+
     const canvas = document.getElementById('webcam-canvas');
-    canvas.width  = size;
-    canvas.height = size;
+    canvas.width  = 300;
+    canvas.height = 300;
 
     setStatus('success', '✅ Model & kamera siap! 3 detik lagi...');
     setTimeout(() => startCountdown(), 800);
@@ -85,87 +140,59 @@ async function loadModel() {
   }
 }
 
-function setStatus(type, html) {
-  const el = document.getElementById('setup-status');
-  el.className = 'setup-status ' + type;
-  el.innerHTML = html;
-}
-
-function startCountdown() {
-  const overlay = document.getElementById('countdown-overlay');
-  const numEl   = document.getElementById('countdown-num');
-  overlay.style.display = 'flex';
-  let count = 3;
-  numEl.textContent = count;
-  const iv = setInterval(() => {
-    count--;
-    if (count <= 0) {
-      clearInterval(iv);
-      overlay.style.display = 'none';
-      showScreen('game');
-      loadQuestion(0);
-      gameStartTime = Date.now();
-      if (isCameraMode) startPredictionLoop();
-    } else {
-      numEl.style.animation = 'none';
-      void numEl.offsetWidth;
-      numEl.style.animation = 'countPop 0.5s cubic-bezier(0.34,1.56,0.64,1)';
-      numEl.textContent = count;
-    }
-  }, 1000);
-}
-
 async function startPredictionLoop() {
-  if (!isCameraMode || !model || !webcam) return;
+  if (!isCameraMode || !model) return;
 
   const canvas = document.getElementById('webcam-canvas');
   const ctx    = canvas.getContext('2d');
-  if (!ctx) return;
+  const video  = window._handstrike_video;
+
+  if (!ctx || !video) return;
 
   async function loop() {
-    if (!isCameraMode || !model || !webcam) return;
+    if (!isCameraMode || !model) return;
 
     try {
-      webcam.update(); // update internal webcam.canvas untuk estimatePose
+      // Gambar frame video ke canvas (mirror)
+      ctx.save();
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
 
-      // Estimasi pose dari webcam.canvas (wajib, ini yang model pakai)
-      const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-      const predictions = await model.predict(posenetOutput);
+      if (!isAnswering) {
+        // Estimasi pose dari canvas
+        const { pose, posenetOutput } = await model.estimatePose(canvas);
+        const predictions = await model.predict(posenetOutput);
 
-      // ── Gambar video ke canvas kita ──────────────────────────────
-      // Gunakan webcam.video langsung agar tidak bergantung pada
-      // webcam.canvas yang kadang kosong di beberapa environment.
-      // Flip mirror dilakukan manual dengan ctx.translate + ctx.scale.
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Overlay skeleton
+        if (pose) {
+          try {
+            window.tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
+            window.tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
+          } catch(e) {}
+        }
 
-      const vid = webcam.video;
-      if (vid && vid.readyState >= 2) {
-        ctx.save();
-        ctx.translate(canvas.width, 0); // geser ke kanan
-        ctx.scale(-1, 1);               // flip horizontal
-        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
+        // Parse prediksi
+        let leftConf = 0, rightConf = 0, neutralConf = 0;
+        predictions.forEach(p => {
+          const name = p.className.toLowerCase();
+          if      (name === classLabels.left.toLowerCase())    leftConf    = p.probability;
+          else if (name === classLabels.right.toLowerCase())   rightConf   = p.probability;
+          else    neutralConf = Math.max(neutralConf, p.probability);
+        });
+
+        updateBars(leftConf, rightConf, neutralConf);
+        processGesture(leftConf, rightConf);
+      } else {
+        // Clear state bars/gestures when answering or in cooldown
+        updateBars(0, 0, 0);
+        document.getElementById('gesture-value').textContent = '—';
+        document.getElementById('gesture-value').className   = 'gesture-value neutral';
+        document.getElementById('hold-bar').style.width      = '0%';
+        document.getElementById('choice-left').classList.remove('active');
+        document.getElementById('choice-right').classList.remove('active');
       }
-
-      // ── Overlay skeleton pose ────────────────────────────────────
-      if (pose) {
-        try {
-          window.tmPose.drawKeypoints(pose.keypoints, 0.5, ctx);
-          window.tmPose.drawSkeleton(pose.keypoints, 0.5, ctx);
-        } catch(e) {}
-      }
-
-      // ── Parse prediksi ───────────────────────────────────────────
-      let leftConf = 0, rightConf = 0, neutralConf = 0;
-      predictions.forEach(p => {
-        const name = p.className.toLowerCase();
-        if      (name === classLabels.left.toLowerCase())  leftConf    = p.probability;
-        else if (name === classLabels.right.toLowerCase()) rightConf   = p.probability;
-        else    neutralConf = Math.max(neutralConf, p.probability);
-      });
-
-      updateBars(leftConf, rightConf, neutralConf);
-      processGesture(leftConf, rightConf);
 
       predictionLoop = requestAnimationFrame(loop);
     } catch (err) {
@@ -249,7 +276,7 @@ function loadQuestion(index) {
 function submitAnswer(side) {
   if (isAnswering) return;
   isAnswering = true;
-  stopPredictionLoop();
+  // Kita tidak mematikan loop kamera agar feed tetap jalan
   const q         = QUIZ_DATA[currentQ];
   const isCorrect = side === q.correct;
   if (isCorrect) {
@@ -265,8 +292,7 @@ function submitAnswer(side) {
   showFeedback(isCorrect);
   setTimeout(() => {
     hideFeedback();
-    loadQuestion(currentQ + 1);
-    if (isCameraMode) startPredictionLoop();
+    loadQuestionWithCooldown(currentQ + 1);
   }, 1500);
 }
 
@@ -279,9 +305,55 @@ function showFeedback(isCorrect) {
 }
 function hideFeedback() { document.getElementById('feedback-overlay').classList.remove('show'); }
 
+function loadQuestionWithCooldown(index) {
+  if (index >= QUIZ_DATA.length) return endGame();
+  
+  isCooldown = true;
+  isAnswering = true; // Kunci input selama cooldown
+  
+  // Muat pertanyaan baru (akan mengeset isAnswering ke false)
+  loadQuestion(index);
+  
+  // Set kembali ke true selama cooldown
+  isAnswering = true;
+  
+  const choiceLeft = document.getElementById('choice-left');
+  const choiceRight = document.getElementById('choice-right');
+  choiceLeft.classList.add('cooldown');
+  choiceRight.classList.add('cooldown');
+  
+  let cooldownLeft = 1.5;
+  const holdTimerLabel = document.querySelector('.hold-timer-label');
+  holdTimerLabel.textContent = `✋ Turunkan tangan & Bersiap... (${cooldownLeft.toFixed(1)}s)`;
+  
+  if (cooldownTimer) clearInterval(cooldownTimer);
+  cooldownTimer = setInterval(() => {
+    cooldownLeft -= 0.1;
+    if (cooldownLeft <= 0) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+      isCooldown = false;
+      isAnswering = false; // Buka kunci input
+      
+      choiceLeft.classList.remove('cooldown');
+      choiceRight.classList.remove('cooldown');
+      holdTimerLabel.textContent = `⏳ Tahan 1.5 detik untuk jawab`;
+    } else {
+      holdTimerLabel.textContent = `✋ Turunkan tangan & Bersiap... (${cooldownLeft.toFixed(1)}s)`;
+    }
+  }, 100);
+}
+
 function endGame() {
   stopPredictionLoop();
-  if (webcam) webcam.stop();
+  if (cooldownTimer) { clearInterval(cooldownTimer); cooldownTimer = null; }
+  isCooldown = false;
+  // Hentikan stream kamera native
+  const video = window._handstrike_video;
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+    window._handstrike_video = null;
+  }
   document.removeEventListener('keydown', keyboardFallback);
   const total   = QUIZ_DATA.length;
   const pct     = Math.round((correctCount / total) * 100);
@@ -299,15 +371,171 @@ function endGame() {
 function restartGame() {
   currentQ = 0; score = 0; correctCount = 0; gameStartTime = null;
   currentGesture = null; holdStartTime = null; isAnswering = false;
+  isCooldown = false;
+  if (cooldownTimer) { clearInterval(cooldownTimer); cooldownTimer = null; }
+  
+  // Re-load selected level quiz data
+  const levelSelect = document.getElementById('level-select');
+  const selectedLevel = levelSelect ? levelSelect.value : 'smp';
+  QUIZ_DATA = getQuizDataForLevel(selectedLevel);
+  
   document.getElementById('score-display').textContent = '0';
   document.getElementById('hold-bar').style.width = '0%';
   updateBars(0, 0, 0);
   document.getElementById('gesture-value').textContent = '—';
   showScreen('game');
-  loadQuestion(0);
+  loadQuestionWithCooldown(0);
   gameStartTime = Date.now();
-  if (isCameraMode && webcam) { webcam.play(); startPredictionLoop(); }
-  else document.addEventListener('keydown', keyboardFallback);
+  if (isCameraMode && window._handstrike_video) {
+    window._handstrike_video.play();
+    startPredictionLoop();
+  } else {
+    document.addEventListener('keydown', keyboardFallback);
+  }
+}
+
+/* ═══════════════════════════════════════
+   FUNGSI MANAJEMEN BANK SOAL (MODAL UI)
+   ═══════════════════════════════════════ */
+
+function openQuestionManager() {
+  const managerSelect = document.getElementById('manager-level-select');
+  const mainSelect = document.getElementById('level-select');
+  if (managerSelect && mainSelect) {
+    managerSelect.value = mainSelect.value;
+  }
+  document.getElementById('modal-question-manager').classList.add('active');
+  renderQuestionList();
+}
+
+function closeQuestionManager() {
+  document.getElementById('modal-question-manager').classList.remove('active');
+  // Sinkronisasi pilihan tingkat pendidikan kembali ke halaman utama
+  const managerSelect = document.getElementById('manager-level-select');
+  const mainSelect = document.getElementById('level-select');
+  if (managerSelect && mainSelect) {
+    mainSelect.value = managerSelect.value;
+  }
+}
+
+function renderQuestionList() {
+  const level = document.getElementById('manager-level-select').value;
+  const questions = getQuizDataForLevel(level);
+  const tbody = document.getElementById('question-table-body');
+  tbody.innerHTML = '';
+  
+  questions.forEach((q, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td><strong>${escapeHtml(q.question)}</strong></td>
+      <td>${escapeHtml(q.left)}</td>
+      <td>${escapeHtml(q.right)}</td>
+      <td><span style="font-weight: 800; color: ${q.correct === 'left' ? 'var(--blue)' : 'var(--red)'}">${q.correct === 'left' ? 'Kiri' : 'Kanan'}</span></td>
+      <td>
+        <button class="btn-primary-sm" style="padding: 4px 8px; font-size: 11px; margin-right: 4px;" onclick="editQuestion(${idx})">✏️</button>
+        <button class="btn-danger-sm" style="padding: 4px 8px; font-size: 11px;" onclick="deleteQuestion(${idx})">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  cancelEdit();
+}
+
+function editQuestion(index) {
+  const level = document.getElementById('manager-level-select').value;
+  const questions = getQuizDataForLevel(level);
+  const q = questions[index];
+  
+  document.getElementById('edit-question-index').value = index;
+  document.getElementById('input-q-text').value = q.question;
+  document.getElementById('input-q-left').value = q.left;
+  document.getElementById('input-q-right').value = q.right;
+  document.getElementById('input-q-correct').value = q.correct;
+  
+  document.getElementById('form-title').textContent = `✏️ Edit Pertanyaan #${index + 1}`;
+  document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+  
+  // Scroll form ke area input
+  document.querySelector('.question-form-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function cancelEdit() {
+  document.getElementById('edit-question-index').value = "-1";
+  document.getElementById('input-q-text').value = "";
+  document.getElementById('input-q-left').value = "";
+  document.getElementById('input-q-right').value = "";
+  document.getElementById('input-q-correct').value = "left";
+  
+  document.getElementById('form-title').textContent = "➕ Tambah Pertanyaan Baru";
+  document.getElementById('btn-cancel-edit').style.display = 'none';
+}
+
+function saveQuestion() {
+  const level = document.getElementById('manager-level-select').value;
+  const questions = getQuizDataForLevel(level);
+  
+  const qText = document.getElementById('input-q-text').value.trim();
+  const qLeft = document.getElementById('input-q-left').value.trim();
+  const qRight = document.getElementById('input-q-right').value.trim();
+  const qCorrect = document.getElementById('input-q-correct').value;
+  const editIndex = parseInt(document.getElementById('edit-question-index').value);
+  
+  if (!qText || !qLeft || !qRight) {
+    alert("Maaf, semua kolom (Teks Pertanyaan, Pilihan Kiri, Pilihan Kanan) wajib diisi!");
+    return;
+  }
+  
+  const newQuestion = {
+    question: qText,
+    left: qLeft,
+    right: qRight,
+    correct: qCorrect
+  };
+  
+  if (editIndex === -1) {
+    questions.push(newQuestion);
+  } else {
+    questions[editIndex] = newQuestion;
+  }
+  
+  saveQuizDataForLevel(level, questions);
+  renderQuestionList();
+}
+
+function deleteQuestion(index) {
+  if (!confirm("Apakah Anda yakin ingin menghapus pertanyaan ini dari bank soal?")) return;
+  
+  const level = document.getElementById('manager-level-select').value;
+  const questions = getQuizDataForLevel(level);
+  questions.splice(index, 1);
+  
+  saveQuizDataForLevel(level, questions);
+  renderQuestionList();
+}
+
+function resetQuestionsToDefault() {
+  const level = document.getElementById('manager-level-select').value;
+  let levelName = "";
+  if (level === 'sd') levelName = "Sekolah Dasar (SD)";
+  else if (level === 'smp') levelName = "Sekolah Menengah Pertama (SMP)";
+  else if (level === 'sma') levelName = "Sekolah Menengah Atas (SMA)";
+  else if (level === 'mahasiswa') levelName = "Perguruan Tinggi (Mahasiswa)";
+  
+  if (!confirm(`Apakah Anda yakin ingin mengatur ulang kategori ${levelName} ke setelan bawaan? Seluruh perubahan kustom Anda pada kategori ini akan hilang.`)) return;
+  
+  resetQuizDataForLevel(level);
+  renderQuestionList();
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
