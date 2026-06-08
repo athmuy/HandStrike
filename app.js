@@ -403,6 +403,9 @@ async function endGame() {
   // Simpan skor siswa ke database secara asinkron
   await saveStudentScore(studentName, studentClass, activeLevel, score, pct, timeStr);
 
+  // Memuat peringkat kelas terbaru secara real-time
+  await loadClassLeaderboard(pct, timeStr);
+
   const trophyImg = pct >= 80 ? '🏆' : pct >= 50 ? '🥈' : '🥉';
   document.getElementById('result-trophy').innerHTML = `<img class="apple-emoji" style="width: 72px; height: 72px;" src="https://emojicdn.elk.sh/${trophyImg}" alt="trophy">`;
   document.getElementById('result-pct').textContent    = pct + '%';
@@ -411,6 +414,91 @@ async function endGame() {
   document.getElementById('stat-wrong').textContent    = total - correctCount;
   document.getElementById('stat-time').textContent     = timeStr;
   showScreen('result');
+}
+
+async function loadClassLeaderboard(currentPct, currentTimeStr) {
+  try {
+    const scores = await getStudentScores();
+    
+    // Filter skor berdasarkan tingkat level dan kelas yang sama saja
+    const classScores = scores.filter(s => 
+      s.class_name.toLowerCase().trim() === studentClass.toLowerCase().trim() && 
+      s.level === activeLevel
+    );
+    
+    // Konversi string time_spent (contoh: "0m 45s") menjadi total detik untuk pengurutan
+    function parseTimeToSec(timeStr) {
+      if (!timeStr) return 999999;
+      const parts = timeStr.split(' ');
+      let sec = 0;
+      parts.forEach(p => {
+        if (p.endsWith('m')) sec += parseInt(p) * 60;
+        else if (p.endsWith('s')) sec += parseInt(p);
+      });
+      return sec;
+    }
+    
+    // Urutkan peringkat:
+    // 1. Akurasi/Persentase Benar (descending)
+    // 2. Waktu pengerjaan (ascending)
+    // 3. Waktu simpan/submit paling awal (ascending)
+    classScores.sort((a, b) => {
+      if (b.accuracy !== a.accuracy) {
+        return b.accuracy - a.accuracy;
+      }
+      const secA = parseTimeToSec(a.time_spent);
+      const secB = parseTimeToSec(b.time_spent);
+      if (secA !== secB) {
+        return secA - secB;
+      }
+      return new Date(a.created_at) - new Date(b.created_at);
+    });
+    
+    // Setel judul tag kelas
+    document.getElementById('leaderboard-class-tag').textContent = studentClass.toUpperCase();
+    
+    const tbody = document.getElementById('leaderboard-list-body');
+    tbody.innerHTML = '';
+    
+    if (classScores.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--muted); padding: 24px;">Belum ada riwayat pengerjaan kelas ini.</td></tr>';
+      return;
+    }
+    
+    classScores.forEach((s, idx) => {
+      const tr = document.createElement('tr');
+      
+      // Jika data adalah milik siswa saat ini di permainan ini, beri highlight
+      const isMe = s.student_name === studentName && s.accuracy === currentPct && s.time_spent === currentTimeStr;
+      if (isMe) {
+        tr.className = 'highlight-me';
+      }
+      
+      let rankBadge = '';
+      if (idx === 0) {
+        rankBadge = `<img class="apple-emoji" src="https://emojicdn.elk.sh/🥇" alt="1">`;
+      } else if (idx === 1) {
+        rankBadge = `<img class="apple-emoji" src="https://emojicdn.elk.sh/🥈" alt="2">`;
+      } else if (idx === 2) {
+        rankBadge = `<img class="apple-emoji" src="https://emojicdn.elk.sh/🥉" alt="3">`;
+      } else {
+        rankBadge = `<span style="font-weight: 800; color: var(--muted); margin-left: 6px;">${idx + 1}</span>`;
+      }
+      
+      tr.innerHTML = `
+        <td style="text-align: center; vertical-align: middle;">${rankBadge}</td>
+        <td>
+          <strong>${escapeHtml(s.student_name)}</strong>
+          ${isMe ? ' <span style="color: var(--purple); font-size: 11px; font-weight:800;">(Kamu)</span>' : ''}
+        </td>
+        <td><span style="font-weight: 800; color: ${s.accuracy >= 80 ? 'var(--green)' : s.accuracy >= 50 ? 'var(--yellow-d)' : 'var(--red-d)'}">${s.accuracy}%</span></td>
+        <td>${escapeHtml(s.time_spent)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Gagal memuat papan peringkat:", err);
+  }
 }
 
 async function restartGame() {

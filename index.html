@@ -107,13 +107,42 @@
 
 <!-- SCREEN: RESULT -->
 <div id="screen-result" class="screen">
-  <div class="result-card">
-    <span class="result-trophy" id="result-trophy">🏆</span>
-    <div class="result-title">Selesai!</div>
-    <div class="result-score" id="result-pct">80%</div>
-    <div class="result-label" id="result-label">Benar 4 dari 5 pertanyaan</div>
-    <div class="result-stats"><div class="stat-chip correct"><img class="apple-emoji" src="https://emojicdn.elk.sh/✅" alt="✅"> Benar: <span id="stat-correct">4</span></div><div class="stat-chip wrong"><img class="apple-emoji" src="https://emojicdn.elk.sh/❌" alt="❌"> Salah: <span id="stat-wrong">1</span></div><div class="stat-chip time"><img class="apple-emoji" src="https://emojicdn.elk.sh/⏱️" alt="⏱️"> Waktu: <span id="stat-time">—</span></div></div>
-    <div class="result-actions"><button class="btn-green" onclick="restartGame()"><img class="apple-emoji" src="https://emojicdn.elk.sh/🔁" alt="🔁"> Main Lagi</button><button class="btn-secondary" onclick="showScreen('intro')"><img class="apple-emoji" src="https://emojicdn.elk.sh/🏠" alt="🏠"> Beranda</button></div>
+  <div class="result-wrapper">
+    <div class="result-card">
+      <span class="result-trophy" id="result-trophy">🏆</span>
+      <div class="result-title">Selesai!</div>
+      <div class="result-score" id="result-pct">80%</div>
+      <div class="result-label" id="result-label">Benar 4 dari 5 pertanyaan</div>
+      <div class="result-stats"><div class="stat-chip correct"><img class="apple-emoji" src="https://emojicdn.elk.sh/✅" alt="✅"> Benar: <span id="stat-correct">4</span></div><div class="stat-chip wrong"><img class="apple-emoji" src="https://emojicdn.elk.sh/❌" alt="❌"> Salah: <span id="stat-wrong">1</span></div><div class="stat-chip time"><img class="apple-emoji" src="https://emojicdn.elk.sh/⏱️" alt="⏱️"> Waktu: <span id="stat-time">—</span></div></div>
+      <div class="result-actions"><button class="btn-green" onclick="restartGame()"><img class="apple-emoji" src="https://emojicdn.elk.sh/🔁" alt="🔁"> Main Lagi</button><button class="btn-secondary" onclick="showScreen('intro')"><img class="apple-emoji" src="https://emojicdn.elk.sh/🏠" alt="🏠"> Beranda</button></div>
+    </div>
+    
+    <div class="leaderboard-card">
+      <div class="leaderboard-title">
+        <img class="apple-emoji" src="https://emojicdn.elk.sh/🏆" alt="🏆"> Peringkat Kelas <span id="leaderboard-class-tag" style="color: var(--purple);">7-A</span>
+      </div>
+      <p class="leaderboard-subtitle">Daftar peringkat pengerjaan kuis sekelas Anda</p>
+      
+      <div class="leaderboard-list-wrap">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th style="width: 20%; text-align: center;">Rank</th>
+              <th style="width: 50%">Nama Siswa</th>
+              <th style="width: 15%">Akurasi</th>
+              <th style="width: 15%">Waktu</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-list-body">
+            <!-- Diisi oleh JS -->
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="leaderboard-footer-info">
+        *Diurutkan berdasarkan skor akurasi tertinggi, lalu waktu tersingkat.
+      </div>
+    </div>
   </div>
 </div>
 
