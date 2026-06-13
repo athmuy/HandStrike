@@ -16,7 +16,7 @@ async function getQuizDataForLevel(level) {
     if (!res.ok) throw new Error("Gagal mengambil data dari server");
     
     const json = await res.json();
-    if (json.status === 'success') {
+    if (json.status === 'success' && Array.isArray(json.data)) {
       return json.data;
     } else {
       console.error("API error:", json.message);
