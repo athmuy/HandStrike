@@ -4,7 +4,7 @@
    untuk mengambil & menyimpan soal dari MySQL
    ═══════════════════════════════════════ */
 
-const API_URL = "http://apihandstrike.gt.tc/api.php";
+const API_URL = "https://apihandstrike.gt.tc/api.php";
 
 // Variabel global untuk menyimpan data kuis aktif
 let QUIZ_DATA = [];
